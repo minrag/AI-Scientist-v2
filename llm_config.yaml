@@ -40,7 +40,7 @@ academic_search:
 # OpenAlex API 配置(https://docs.openalex.org/api)
 open_alex: 
   api_key: "xxxxx"  # OpenAlex API密钥
-  email: ""    # 邮箱地址（用于礼貌使用API的mailto参数）
+  email: ""    # 邮箱地址(用于礼貌使用API的mailto参数)
   base_url: "https://api.openalex.org"  # OpenAlex API基础URL
 
 # Semantic Scholar API 配置(https://www.semanticscholar.org/product/api#api-key-form)

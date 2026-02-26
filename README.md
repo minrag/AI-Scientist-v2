@@ -110,7 +110,7 @@ rely on them, e.g. AWS credentials when using Bedrock with Claude models:
 
 Before running the full AI Scientist-v2 experiment pipeline, you first use the `ai_scientist/perform_ideation_temp_free.py` script to generate potential research ideas. This script uses an LLM to brainstorm and refine ideas based on a high-level topic description you provide, interacting with academic search tools (OpenAlex or Semantic Scholar) to check for novelty.
 
-1.  **Prepare a Topic Description:** Create a Markdown file (e.g., `my_research_topic.md`) describing the research area or theme you want the AI to explore. This file should contain sections like `Title`, `Keywords`, `TL;DR`, and `Abstract` to define the scope of the research. Refer to the example file `ai_scientist/ideas/i_cant_believe_its_not_better.md` for the expected structure and content format. Place your file in a location accessible by the script (e.g., the `ai_scientist/ideas/` directory).
+1.  **Prepare a Topic Description:** Create a Markdown file (e.g., `i_cant_believe_its_not_better.md`) describing the research area or theme you want the AI to explore. This file should contain sections like `Title`, `Keywords`, `TL;DR`, and `Abstract` to define the scope of the research. Refer to the example file `ai_scientist/ideas/i_cant_believe_its_not_better.md` for the expected structure and content format. Place your file in a location accessible by the script (e.g., the `ai_scientist/ideas/` directory).
 
 2.  **Run the Ideation Script:** Execute the script from the main project directory, pointing it to your topic description file and specifying the desired LLM.
 
@@ -126,7 +126,7 @@ Before running the full AI Scientist-v2 experiment pipeline, you first use the `
     *   `--max-num-generations`: How many distinct research ideas to attempt generating.
     *   `--num-reflections`: How many refinement steps the LLM should perform for each idea.
 
-3.  **Output:** The script will generate a JSON file named after your input Markdown file (e.g., `ai_scientist/ideas/my_research_topic.json`). This file will contain a list of structured research ideas, including hypotheses, proposed experiments, and related work analysis.
+3.  **Output:** The script will generate a JSON file named after your input Markdown file (e.g., `ai_scientist/ideas/i_cant_believe_its_not_better.json`). This file will contain a list of structured research ideas, including hypotheses, proposed experiments, and related work analysis.
 
 4.  **Proceed to Experiments:** Once you have the generated JSON file containing research ideas, you can proceed to the next section to run the experiments.
 
@@ -150,11 +150,11 @@ Key tree search configuration parameters in `bfts_config.yaml`:
     -   `debug_prob`: The probability of attempting to debug a failing node.
     -   `num_drafts`: The number of initial root nodes (i.e., the number of independent trees to grow) during Stage 1.
 
-Example command to run AI-Scientist-v2 using a generated idea file (e.g., `my_research_topic.json`). Please review `bfts_config.yaml` for detailed tree search parameters (the default config includes `claude-3-5-sonnet` for experiments). Do not set `load_code` if you do not want to initialize experimentation with a code snippet.
+Example command to run AI-Scientist-v2 using a generated idea file (e.g., `i_cant_believe_its_not_better.json`). Please review `bfts_config.yaml` for detailed tree search parameters (the default config includes `claude-3-5-sonnet` for experiments). Do not set `load_code` if you do not want to initialize experimentation with a code snippet.
 
 ```bash
 python launch_scientist_bfts.py \
- --load_ideas "ai_scientist/ideas/my_research_topic.json" \
+ --load_ideas "ai_scientist/ideas/i_cant_believe_its_not_better.json" \
  --load_code \
  --add_dataset_ref \
  --model_writeup llm \
@@ -200,7 +200,7 @@ The academic search APIs (OpenAlex or Semantic Scholar) are used to assess the n
 
 **I encountered a "CUDA Out of Memory" error. What can I do?**
 
-This error typically occurs when the AI Scientist-v2 attempts to load or run a model that requires more GPU memory than available on your system. To resolve this, you can try updating your ideation prompt file (`ai_scientist/ideas/my_research_topic.md`) to suggest using smaller models for the experiments.
+This error typically occurs when the AI Scientist-v2 attempts to load or run a model that requires more GPU memory than available on your system. To resolve this, you can try updating your ideation prompt file (`ai_scientist/ideas/i_cant_believe_its_not_better.md`) to suggest using smaller models for the experiments.
 
 ## Acknowledgement
 

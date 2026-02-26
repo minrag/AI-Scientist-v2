@@ -16,10 +16,24 @@ def get_ai_client(model: str, **model_kwargs):
             f"模型 '{model}' 未在配置文件中定义。请使用 llm、vlm 或 code 等键。"
         )
     client_type = cfg.get("client_type", "").lower()
+
+    # 从配置中提取
+    api_key = cfg.get("api_key")
+    base_url = cfg.get("base_url")
+    model_name= cfg.get("model_name")
+
+
+    # 移除可能重复的键，避免传递给后端函数时出现重复参数错误
+    model_kwargs.pop("model", None)
+    model_kwargs.pop("api_key", None)
+    model_kwargs.pop("base_url", None)
+
+    # 确定要传递给后端函数的 model 值
+    
     if client_type == "anthropic":
-        return backend_anthropic.get_ai_client(model=model, **model_kwargs)
+        return backend_anthropic.get_ai_client(model=model_name, base_url=base_url, api_key=api_key, **model_kwargs)
     else:
-        return backend_openai.get_ai_client(model=model, **model_kwargs)
+        return backend_openai.get_ai_client(model=model_name, base_url=base_url, api_key=api_key, **model_kwargs)
 
 def query(
     system_message: PromptType | None,
@@ -50,17 +64,20 @@ def query(
         "temperature": temperature,
     }
 
-    # pass along temperature; configuration may override.  ``max_tokens``
-    # is intentionally omitted so that callers do not specify it.
-    if temperature is not None:
-        model_kwargs["temperature"] = temperature
-
     # determine which query function to use via config
     cfg = _get_model_config(model)
     if not cfg:
         raise ValueError(
             f"模型 '{model}' 未在配置文件中定义。请使用 llm、vlm 或 code 等键。"
         )
+    # 从配置中提取 api_key 和 base_url 并添加到 model_kwargs
+    if "api_key" in cfg:
+        model_kwargs["api_key"] = cfg["api_key"]
+    if "base_url" in cfg:
+        model_kwargs["base_url"] = cfg["base_url"]
+    # 如果配置中有 model_name, 则使用它替换 model 键
+    if "model_name" in cfg:
+        model_kwargs["model"] = cfg["model_name"]
     query_func = backend_anthropic.query if cfg.get("client_type", "").lower() == "anthropic" else backend_openai.query
     output, req_time, in_tok_count, out_tok_count, info = query_func(
         system_message=compile_prompt_to_md(system_message) if system_message else None,

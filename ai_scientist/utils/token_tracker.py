@@ -24,31 +24,22 @@ class TokenTracker:
 
         # Simplified model price mapping — keys use canonical model names without date suffixes
         self.MODEL_PRICES = {
-            "gpt-4o": {
+            "llm": {
                 "prompt": 2.5 / 1000000,
                 "cached": 1.25 / 1000000,
                 "completion": 10 / 1000000,
             },
-            "gpt-4o-mini": {
-                "prompt": 0.15 / 1000000,
-                "cached": 0.075 / 1000000,
-                "completion": 0.6 / 1000000,
-            },
-            "o1": {
+            "vlm": {
                 "prompt": 15 / 1000000,
                 "cached": 7.5 / 1000000,
                 "completion": 60 / 1000000,
             },
-            "o1-preview": {
+            "code": {
                 "prompt": 15 / 1000000,
                 "cached": 7.5 / 1000000,
                 "completion": 60 / 1000000,
             },
-            "o3-mini": {
-                "prompt": 1.1 / 1000000,
-                "cached": 0.55 / 1000000,
-                "completion": 4.4 / 1000000,
-            },
+           
         }
 
     def add_tokens(
@@ -59,11 +50,10 @@ class TokenTracker:
         reasoning_tokens: int,
         cached_tokens: int,
     ):
-        m = self._normalize_model_name(model)
-        self.token_counts[m]["prompt"] += prompt_tokens
-        self.token_counts[m]["completion"] += completion_tokens
-        self.token_counts[m]["reasoning"] += reasoning_tokens
-        self.token_counts[m]["cached"] += cached_tokens
+        self.token_counts[model]["prompt"] += prompt_tokens
+        self.token_counts[model]["completion"] += completion_tokens
+        self.token_counts[model]["reasoning"] += reasoning_tokens
+        self.token_counts[model]["cached"] += cached_tokens
 
     def add_interaction(
         self,
@@ -74,8 +64,7 @@ class TokenTracker:
         timestamp: datetime,
     ):
         """Record a single interaction with the model."""
-        m = self._normalize_model_name(model)
-        self.interactions[m].append(
+        self.interactions[model].append(
             {
                 "system_message": system_message,
                 "prompt": prompt,
@@ -87,8 +76,7 @@ class TokenTracker:
     def get_interactions(self, model: Optional[str] = None) -> Dict[str, List[Dict]]:
         """Get all interactions, optionally filtered by model."""
         if model:
-            m = self._normalize_model_name(model)
-            return {m: self.interactions[m]}
+            return {model: self.interactions[model]}
         return dict(self.interactions)
 
     def reset(self):
@@ -101,13 +89,12 @@ class TokenTracker:
 
     def calculate_cost(self, model: str) -> float:
         """Calculate the cost for a specific model based on token usage."""
-        m = self._normalize_model_name(model)
-        if m not in self.MODEL_PRICES:
-            logging.warning(f"Price information not available for model {m}")
+        if model not in self.MODEL_PRICES:
+            logging.warning(f"Price information not available for model {model}")
             return 0.0
 
-        prices = self.MODEL_PRICES[m]
-        tokens = self.token_counts[m]
+        prices = self.MODEL_PRICES[model]
+        tokens = self.token_counts[model]
 
         # Calculate cost for prompt and completion tokens
         if "cached" in prices:
@@ -131,26 +118,6 @@ class TokenTracker:
             }
         return summary
 
-    def _normalize_model_name(self, model: str) -> str:
-        """Normalize model names by removing date/version suffixes and mapping to canonical keys.
-
-        Examples:
-        - 'gpt-4o-2024-11-20' -> 'gpt-4o'
-        - 'gpt-4o-mini-2024-07-18' -> 'gpt-4o-mini'
-        - 'o1-2024-12-17' -> 'o1'
-        - 'bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0' -> 'claude-3-5-sonnet'
-        """
-        if not model:
-            return model
-        # normalize by removing common date/version suffixes
-        m = model.lower()
-        # strip trailing date patterns like -YYYY-MM-DD or -YYYYMMDD
-        m = re.sub(r"-\d{4}-\d{2}-\d{2}", "", m)
-        m = re.sub(r"-\d{8}", "", m)
-        # drop anything after colon (ollama-style tags or other qualifiers)
-        if ":" in m:
-            m = m.split(":")[0]
-        return m
 
 
 # Global token tracker instance

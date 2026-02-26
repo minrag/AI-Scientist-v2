@@ -17,15 +17,19 @@ OPENAI_TIMEOUT_EXCEPTIONS = (
     openai.InternalServerError,
 )
 
-def get_ai_client(model: str, base_url: str | None = None, max_retries=2) -> openai.OpenAI:
+def get_ai_client(model: str, base_url: str | None = None, api_key: str | None = None, max_retries=2) -> openai.OpenAI:
     """Return a generic OpenAI-compatible client.
 
     The caller can supply a ``base_url`` (for non-OpenAI endpoints) via
     keyword arguments; the model string itself is no longer examined.
+    If ``api_key`` is provided, it will be used; otherwise the client will
+    fall back to the OPENAI_API_KEY environment variable.
     """
     kwargs = {"max_retries": max_retries}
     if base_url:
         kwargs["base_url"] = base_url
+    if api_key is not None:
+        kwargs["api_key"] = api_key
     return openai.OpenAI(**kwargs)
 
 
@@ -35,13 +39,18 @@ def query(
     func_spec: FunctionSpec | None = None,
     **model_kwargs,
 ) -> tuple[OutputType, float, int, int, dict]:
-    # model_kwargs may include 'base_url' or other configuration fields
+    # model_kwargs may include 'base_url', 'api_key' or other configuration fields
     client = get_ai_client(
         model_kwargs.get("model"),
         base_url=model_kwargs.get("base_url"),
+        api_key=model_kwargs.get("api_key"),
         max_retries=0,
     )
     filtered_kwargs: dict = select_values(notnone, model_kwargs)  # type: ignore
+    # Remove client configuration parameters that should not be passed to the API call
+    filtered_kwargs.pop("api_key", None)
+    filtered_kwargs.pop("base_url", None)
+    filtered_kwargs.pop("max_retries", None)
 
     messages = opt_messages_to_list(system_message, user_message)
 
