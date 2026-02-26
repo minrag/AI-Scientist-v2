@@ -1,17 +1,22 @@
 from . import backend_anthropic, backend_openai
 from .utils import FunctionSpec, OutputType, PromptType, compile_prompt_to_md
+from ai_scientist.llm import _get_model_config
 
 def get_ai_client(model: str, **model_kwargs):
-    """
-    Get the appropriate AI client based on the model string.
+    """Return an AI client based on configuration key or raw name.
 
-    Args:
-        model (str): string identifier for the model to use (e.g. "gpt-4-turbo")
-        **model_kwargs: Additional keyword arguments for model configuration.
-    Returns:
-        An instance of the appropriate AI client.
+    If ``model`` corresponds to one of the configured keys (llm/vlm/code),
+    the client_type from the configuration is used to pick the backend.  For
+    backward compatibility, raw API model strings will continue to use substring
+    heuristics.
     """
-    if "claude-" in model:
+    cfg = _get_model_config(model)
+    if not cfg:
+        raise ValueError(
+            f"模型 '{model}' 未在配置文件中定义。请使用 llm、vlm 或 code 等键。"
+        )
+    client_type = cfg.get("client_type", "").lower()
+    if client_type == "anthropic":
         return backend_anthropic.get_ai_client(model=model, **model_kwargs)
     else:
         return backend_openai.get_ai_client(model=model, **model_kwargs)
@@ -21,7 +26,6 @@ def query(
     user_message: PromptType | None,
     model: str,
     temperature: float | None = None,
-    max_tokens: int | None = None,
     func_spec: FunctionSpec | None = None,
     **model_kwargs,
 ) -> OutputType:
@@ -46,27 +50,18 @@ def query(
         "temperature": temperature,
     }
 
-    # Handle models with beta limitations
-    # ref: https://platform.openai.com/docs/guides/reasoning/beta-limitations
-    if model.startswith("o1"):
-        if system_message and user_message is None:
-            user_message = system_message
-        elif system_message is None and user_message:
-            pass
-        elif system_message and user_message:
-            system_message["Main Instructions"] = {}
-            system_message["Main Instructions"] |= user_message
-            user_message = system_message
-        system_message = None
-        # model_kwargs["temperature"] = 0.5
-        model_kwargs["reasoning_effort"] = "high"
-        model_kwargs["max_completion_tokens"] = 100000  # max_tokens
-        # remove 'temperature' from model_kwargs
-        model_kwargs.pop("temperature", None)
-    else:
-        model_kwargs["max_tokens"] = max_tokens
+    # pass along temperature; configuration may override.  ``max_tokens``
+    # is intentionally omitted so that callers do not specify it.
+    if temperature is not None:
+        model_kwargs["temperature"] = temperature
 
-    query_func = backend_anthropic.query if "claude-" in model else backend_openai.query
+    # determine which query function to use via config
+    cfg = _get_model_config(model)
+    if not cfg:
+        raise ValueError(
+            f"模型 '{model}' 未在配置文件中定义。请使用 llm、vlm 或 code 等键。"
+        )
+    query_func = backend_anthropic.query if cfg.get("client_type", "").lower() == "anthropic" else backend_openai.query
     output, req_time, in_tok_count, out_tok_count, info = query_func(
         system_message=compile_prompt_to_md(system_message) if system_message else None,
         user_message=compile_prompt_to_md(user_message) if user_message else None,

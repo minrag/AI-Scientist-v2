@@ -1,0 +1,38 @@
+# LLM 配置文件
+# 优先使用此配置文件中的配置，如果没有找到对应模型的配置，则回退到 llm.py 中的硬编码逻辑
+
+models:
+  # 精简后的模型配置示例 — 使用通用模型名，不带日期后缀
+  llm: ## 大语言模型
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxxxxxxxxxxxxxxxxxxx"  # 替换为您的 OpenAI API 密钥
+    model_name: deepseek-chat
+
+  vlm: ## 视觉多模态模型
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxxxxxxxxxxxxxxxxxxx"  # 替换为您的 OpenAI API 密钥
+    model_name: deepseek-chat
+
+  code: ## 默认的编码模型
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxxxxxxxxxxxxxxxxxxx"  # 替换为您的 DeepSeek API 密钥
+    model_name: deepseek-chat
+
+# Semantic Scholar API 配置(https://www.semanticscholar.org/product/api#api-key-form)
+semantic_scholar:
+  api_key: ""  # 替换为您的 Semantic Scholar API 密钥
+
+
+# 配置说明：
+# 目前仅支持三个顶级模型键：
+#   llm  - 大语言模型
+#   vlm  - 多模态 / 视觉语言模型
+#   code - 代码生成模型
+#
+# client_type 只能是以下之一：
+# - openai
+# - anthropic
+#

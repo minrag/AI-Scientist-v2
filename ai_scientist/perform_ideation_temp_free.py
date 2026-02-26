@@ -170,6 +170,9 @@ def generate_temp_free_idea(
                         last_tool_results=last_tool_results or "No new results.",
                     )
 
+                # if the LLM is failing repeatedly, bubble the exception so the
+                # outer loop can stop rather than logging the same message
+                # twenty times.
                 response_text, msg_history = get_response_from_llm(
                     prompt=prompt_text,
                     client=client,
@@ -252,6 +255,13 @@ def generate_temp_free_idea(
             if idea_finalized:
                 continue  # Move to the next idea
 
+        except RuntimeError as e:
+            # a runtime error here is likely from the LLM call itself; it's
+            # not productive to keep trying further generations if the service
+            # is misconfigured or unreachable.
+            print("Critical LLM error encountered. Aborting further generations.")
+            traceback.print_exc()
+            break
         except Exception as e:
             print("Failed to generate proposal:")
             traceback.print_exc()
@@ -273,9 +283,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        default="gpt-4o-2024-05-13",
+        default="llm",
         choices=AVAILABLE_LLMS,
-        help="Model to use for AI Scientist.",
+        help="Model key from configuration to use for AI Scientist (llm/vlm/code).",
     )
     parser.add_argument(
         "--max-num-generations",

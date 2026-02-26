@@ -3,86 +3,22 @@ import os
 import re
 from typing import Any
 from ai_scientist.utils.token_tracker import track_token_usage
+from ai_scientist.utils.config_loader import load_llm_config, get_model_config
 
 import anthropic
 import backoff
 import openai
+from pathlib import Path
 
-MAX_NUM_TOKENS = 4096
 
-AVAILABLE_LLMS = [
-    "claude-3-5-sonnet-20240620",
-    "claude-3-5-sonnet-20241022",
-    # OpenAI models
-    "gpt-4o-mini",
-    "gpt-4o-mini-2024-07-18",
-    "gpt-4o",
-    "gpt-4o-2024-05-13",
-    "gpt-4o-2024-08-06",
-    "gpt-4.1",
-    "gpt-4.1-2025-04-14",
-    "gpt-4.1-mini",
-    "gpt-4.1-mini-2025-04-14",
-    "o1",
-    "o1-2024-12-17",
-    "o1-preview-2024-09-12",
-    "o1-mini",
-    "o1-mini-2024-09-12",
-    "o3-mini",
-    "o3-mini-2025-01-31",
-    # DeepSeek Models
-    "deepseek-coder-v2-0724",
-    "deepcoder-14b",
-    # Llama 3 models
-    "llama3.1-405b",
-    # Anthropic Claude models via Amazon Bedrock
-    "bedrock/anthropic.claude-3-sonnet-20240229-v1:0",
-    "bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0",
-    "bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0",
-    "bedrock/anthropic.claude-3-haiku-20240307-v1:0",
-    "bedrock/anthropic.claude-3-opus-20240229-v1:0",
-    # Anthropic Claude models Vertex AI
-    "vertex_ai/claude-3-opus@20240229",
-    "vertex_ai/claude-3-5-sonnet@20240620",
-    "vertex_ai/claude-3-5-sonnet@20241022",
-    "vertex_ai/claude-3-sonnet@20240229",
-    "vertex_ai/claude-3-haiku@20240307",
-    # Google Gemini models
-    "gemini-2.0-flash",
-    "gemini-2.5-flash-preview-04-17",
-    "gemini-2.5-pro-preview-03-25",
-    # GPT-OSS models via Ollama
-    "ollama/gpt-oss:20b",
-    "ollama/gpt-oss:120b",
-    # Qwen models via Ollama
-    "ollama/qwen3:8b",
-    "ollama/qwen3:32b",
-    "ollama/qwen3:235b",
-
-    "ollama/qwen2.5vl:8b",
-    "ollama/qwen2.5vl:32b",
-
-    "ollama/qwen3-coder:70b",
-    "ollama/qwen3-coder:480b",
-
-    # Deepseek models via Ollama
-    "ollama/deepseek-r1:8b",
-    "ollama/deepseek-r1:32b",
-    "ollama/deepseek-r1:70b",
-    "ollama/deepseek-r1:671b",
-]
+# Only three model keys are supported; defined in llm_config.yaml under 'models'.
+# llm: large language model
+# vlm: vision-language / multimodal model
+# code: code generation model
+AVAILABLE_LLMS = ["llm", "vlm", "code"]
 
 
 # Get N responses from a single message, used for ensembling.
-@backoff.on_exception(
-    backoff.expo,
-    (
-        openai.RateLimitError,
-        openai.APITimeoutError,
-        openai.InternalServerError,
-        anthropic.RateLimitError,
-    ),
-)
 @track_token_usage
 def get_batch_responses_from_llm(
     prompt,
@@ -94,165 +30,42 @@ def get_batch_responses_from_llm(
     temperature=0.7,
     n_responses=1,
 ) -> tuple[list[str], list[list[dict[str, Any]]]]:
-    msg = prompt
+    """Return multiple independent responses from the LLM.
+
+    The provided ``model`` should already be the API-level model name from
+    configuration.  No string sniffing or special cases are performed here;
+    all client-specific dispatch is handled by :func:`get_response_from_llm`.
+    This implementation simply calls that helper repeatedly and aggregates
+    the results.
+    """
     if msg_history is None:
         msg_history = []
 
-    if model.startswith("ollama/"):
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = client.chat.completions.create(
-            model=model.replace("ollama/", ""),
-            messages=[
-                {"role": "system", "content": system_message},
-                *new_msg_history,
-            ],
+    responses: list[str] = []
+    histories: list[list[dict[str, Any]]] = []
+    for _ in range(n_responses):
+        resp, hist = get_response_from_llm(
+            prompt,
+            client,
+            model,
+            system_message,
+            print_debug=print_debug,
+            msg_history=msg_history,
             temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=n_responses,
-            stop=None,
         )
-        content = [r.message.content for r in response.choices]
-        new_msg_history = [
-            new_msg_history + [{"role": "assistant", "content": c}] for c in content
-        ]
-    elif "gpt" in model:
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_message},
-                *new_msg_history,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=n_responses,
-            stop=None,
-            seed=0,
-        )
-        content = [r.message.content for r in response.choices]
-        new_msg_history = [
-            new_msg_history + [{"role": "assistant", "content": c}] for c in content
-        ]
-    elif model == "deepseek-coder-v2-0724":
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = client.chat.completions.create(
-            model="deepseek-coder",
-            messages=[
-                {"role": "system", "content": system_message},
-                *new_msg_history,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=n_responses,
-            stop=None,
-        )
-        content = [r.message.content for r in response.choices]
-        new_msg_history = [
-            new_msg_history + [{"role": "assistant", "content": c}] for c in content
-        ]
-    elif model == "llama-3-1-405b-instruct":
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = client.chat.completions.create(
-            model="meta-llama/llama-3.1-405b-instruct",
-            messages=[
-                {"role": "system", "content": system_message},
-                *new_msg_history,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=n_responses,
-            stop=None,
-        )
-        content = [r.message.content for r in response.choices]
-        new_msg_history = [
-            new_msg_history + [{"role": "assistant", "content": c}] for c in content
-        ]
-    elif 'gemini' in model:
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_message},
-                *new_msg_history,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=n_responses,
-            stop=None,
-        )
-        content = [r.message.content for r in response.choices]
-        new_msg_history = [
-            new_msg_history + [{"role": "assistant", "content": c}] for c in content
-        ]
-    else:
-        content, new_msg_history = [], []
-        for _ in range(n_responses):
-            c, hist = get_response_from_llm(
-                msg,
-                client,
-                model,
-                system_message,
-                print_debug=False,
-                msg_history=None,
-                temperature=temperature,
-            )
-            content.append(c)
-            new_msg_history.append(hist)
+        responses.append(resp)
+        histories.append(hist)
 
-    if print_debug:
-        # Just print the first one.
+    if print_debug and histories:
         print()
         print("*" * 20 + " LLM START " + "*" * 20)
-        for j, msg in enumerate(new_msg_history[0]):
+        for j, msg in enumerate(histories[0]):
             print(f'{j}, {msg["role"]}: {msg["content"]}')
-        print(content)
+        print(responses)
         print("*" * 21 + " LLM END " + "*" * 21)
         print()
 
-    return content, new_msg_history
-
-
-@track_token_usage
-def make_llm_call(client, model, temperature, system_message, prompt):
-    if model.startswith("ollama/"):
-        return client.chat.completions.create(
-            model=model.replace("ollama/", ""),
-            messages=[
-                {"role": "system", "content": system_message},
-                *prompt,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=1,
-            stop=None,
-        )
-    elif "gpt" in model:
-        return client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_message},
-                *prompt,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=1,
-            stop=None,
-            seed=0,
-        )
-    elif "o1" in model or "o3" in model:
-        return client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "user", "content": system_message},
-                *prompt,
-            ],
-            temperature=1,
-            n=1,
-            seed=0,
-        )
-    
-    else:
-        raise ValueError(f"Model {model} not supported.")
+    return responses, histories
 
 
 @backoff.on_exception(
@@ -264,6 +77,45 @@ def make_llm_call(client, model, temperature, system_message, prompt):
         anthropic.RateLimitError,
     ),
 )
+@track_token_usage
+def make_llm_call(client, model, temperature, system_message, prompt):
+    """Make a single LLM request using client/model from configuration.
+
+    The supplied ``model`` should already be the API model name derived from
+    the configuration. No string-based heuristics are applied.
+
+    This helper wraps the underlying client call in a tight try/except block
+    so that if the underlying HTTP response is empty or otherwise unparsable
+    (which the OpenAI/Anthropic SDK surfaces as ``JSONDecodeError`` during
+    response.json()), we convert it into a more descriptive error with the
+    request details.  Downstream code can catch ``RuntimeError`` if it needs
+    to handle such failures specially.
+    """
+    try:
+        resp = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_message},
+                *prompt,
+            ],
+            temperature=temperature,
+            n=1,
+            stop=None,
+        )
+        if not resp:
+            raise RuntimeError(
+                "LLM client returned a falsy response (None or empty)."
+            )
+        return resp
+    except json.decoder.JSONDecodeError as e:
+        # This indicates the HTTP response body could not be decoded as JSON,
+        # typically because it was empty.  Include context for easier debugging.
+        raise RuntimeError(
+            "LLM API returned an invalid or empty response body when calling"
+            f" model={model}. Please check your network/base_url and API key."
+        ) from e
+
+
 def get_response_from_llm(
     prompt,
     client,
@@ -273,169 +125,74 @@ def get_response_from_llm(
     msg_history=None,
     temperature=0.7,
 ) -> tuple[str, list[dict[str, Any]]]:
+    """Get a single response from the configured LLM client.
+
+    This helper is intentionally simple: it does **not** inspect the model
+    string.  Instead it decides how to make the API call solely on whether the
+    client object has an ``messages`` attribute (Anthropic-style) or not
+    (OpenAI-style).  The ``model`` parameter is expected to be the API-level
+    name already loaded from configuration.
+    """
     msg = prompt
     if msg_history is None:
         msg_history = []
 
-    if "claude" in model:
-        new_msg_history = msg_history + [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": msg,
-                    }
-                ],
-            }
-        ]
-        response = client.messages.create(
-            model=model,
-            max_tokens=MAX_NUM_TOKENS,
-            temperature=temperature,
-            system=system_message,
-            messages=new_msg_history,
-        )
-        # response = make_llm_call(client, model, temperature, system_message=system_message, prompt=new_msg_history)
-        content = response.content[0].text
-        new_msg_history = new_msg_history + [
-            {
-                "role": "assistant",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": content,
-                    }
-                ],
-            }
-        ]
-    elif model.startswith("ollama/"):
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = client.chat.completions.create(
-            model=model.replace("ollama/", ""),
-            messages=[
-                {"role": "system", "content": system_message},
-                *new_msg_history,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=1,
-            stop=None,
-        )
-        content = response.choices[0].message.content
-        new_msg_history = new_msg_history + [{"role": "assistant", "content": content}]
-    elif "gpt" in model:
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = make_llm_call(
-            client,
-            model,
-            temperature,
-            system_message=system_message,
-            prompt=new_msg_history,
-        )
-        content = response.choices[0].message.content
-        new_msg_history = new_msg_history + [{"role": "assistant", "content": content}]
-    elif "o1" in model or "o3" in model:
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = make_llm_call(
-            client,
-            model,
-            temperature,
-            system_message=system_message,
-            prompt=new_msg_history,
-        )
-        content = response.choices[0].message.content
-        new_msg_history = new_msg_history + [{"role": "assistant", "content": content}]
-    elif model == "deepseek-coder-v2-0724":
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = client.chat.completions.create(
-            model="deepseek-coder",
-            messages=[
-                {"role": "system", "content": system_message},
-                *new_msg_history,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=1,
-            stop=None,
-        )
-        content = response.choices[0].message.content
-        new_msg_history = new_msg_history + [{"role": "assistant", "content": content}]
-    elif model == "deepcoder-14b":
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        try:
-            response = client.chat.completions.create(
-                model="agentica-org/DeepCoder-14B-Preview",
-                messages=[
-                    {"role": "system", "content": system_message},
-                    *new_msg_history,
-                ],
-                temperature=temperature,
-                max_tokens=MAX_NUM_TOKENS,
-                n=1,
-                stop=None,
-            )
-            content = response.choices[0].message.content
-        except Exception as e:
-            # Fallback to direct API call if OpenAI client doesn't work with HuggingFace
-            import requests
-            headers = {
-                "Authorization": f"Bearer {os.environ['HUGGINGFACE_API_KEY']}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "inputs": {
-                    "system": system_message,
-                    "messages": [{"role": m["role"], "content": m["content"]} for m in new_msg_history]
-                },
-                "parameters": {
-                    "temperature": temperature,
-                    "max_new_tokens": MAX_NUM_TOKENS,
-                    "return_full_text": False
-                }
-            }
-            response = requests.post(
-                "https://api-inference.huggingface.co/models/agentica-org/DeepCoder-14B-Preview",
-                headers=headers,
-                json=payload
-            )
-            if response.status_code == 200:
-                content = response.json()["generated_text"]
-            else:
-                raise ValueError(f"Error from HuggingFace API: {response.text}")
+    new_msg_history = msg_history + [{"role": "user", "content": msg}]
 
-        new_msg_history = new_msg_history + [{"role": "assistant", "content": content}]
-    elif model in ["meta-llama/llama-3.1-405b-instruct", "llama-3-1-405b-instruct"]:
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = client.chat.completions.create(
-            model="meta-llama/llama-3.1-405b-instruct",
-            messages=[
-                {"role": "system", "content": system_message},
-                *new_msg_history,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=1,
-            stop=None,
-        )
-        content = response.choices[0].message.content
-        new_msg_history = new_msg_history + [{"role": "assistant", "content": content}]
-    elif 'gemini' in model:
-        new_msg_history = msg_history + [{"role": "user", "content": msg}]
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_message},
-                *new_msg_history,
-            ],
-            temperature=temperature,
-            max_tokens=MAX_NUM_TOKENS,
-            n=1,
-        )
-        content = response.choices[0].message.content
-        new_msg_history = new_msg_history + [{"role": "assistant", "content": content}]
-    else:
-        raise ValueError(f"Model {model} not supported.")
+    # perform the actual API call and capture any failure modes.  Instead of
+    # letting exceptions bubble out and halt the caller, we catch known
+    # failure classes and convert them into an empty-response result.  This
+    # keeps higher‑level loops (e.g. idea generation) running rather than
+    # aborting the entire process.
+    try:
+        if hasattr(client, "messages"):
+            # Anthropic client
+            @backoff.on_exception(
+                backoff.expo,
+                anthropic.RateLimitError,
+            )
+            def call_anthropic():
+                return client.messages.create(
+                    model=model,
+                    temperature=temperature,
+                    system=system_message,
+                    messages=new_msg_history,
+                )
+            response = call_anthropic()
+            content = response.content[0].text
+        else:
+            # OpenAI-style client
+            response = make_llm_call(
+                client,
+                model,
+                temperature,
+                system_message=system_message,
+                prompt=new_msg_history,
+            )
+            # response should be a proper object with choices; if the call
+            # succeeded but returned nothing, our earlier wrapper would have
+            # already raised.
+            try:
+                content = response.choices[0].message.content
+            except Exception as e:
+                raise RuntimeError(
+                    "LLM response did not contain expected 'choices' field"
+                ) from e
+    except RuntimeError as rte:
+        # this includes our own invalid/empty response errors from make_llm_call
+        # Log the problem then re-raise so that the caller can decide how to
+        # handle it (e.g. abort generation).  This prevents the outer loop from
+        # repeatedly attempting to parse an empty string.
+        print(f"LLM call error: {rte}")
+        raise
+    except Exception as e:
+        # any other unexpected issue - log and propagate
+        import traceback
+        traceback.print_exc()
+        print(f"Unexpected exception in get_response_from_llm: {e} (type {type(e)})")
+        raise
+
+    new_msg_history = new_msg_history + [{"role": "assistant", "content": content}]
 
     if print_debug:
         print()
@@ -477,68 +234,50 @@ def extract_json_between_markers(llm_output: str) -> dict | None:
     return None  # No valid JSON found
 
 
+# _load_llm_config 函数已被移动到 ai_scientist.utils.config_loader 模块
+# 请使用 from ai_scientist.utils.config_loader import load_llm_config
+
+
+def _get_model_config(model: str):
+    """获取指定模型的配置（向后兼容性包装器）"""
+    from ai_scientist.utils.config_loader import get_model_config
+    return get_model_config(model)
+
+
 def create_client(model) -> tuple[Any, str]:
-    if model.startswith("claude-"):
-        print(f"Using Anthropic API with model {model}.")
-        return anthropic.Anthropic(), model
-    elif model.startswith("bedrock") and "claude" in model:
-        client_model = model.split("/")[-1]
-        print(f"Using Amazon Bedrock with model {client_model}.")
-        return anthropic.AnthropicBedrock(), client_model
-    elif model.startswith("vertex_ai") and "claude" in model:
-        client_model = model.split("/")[-1]
-        print(f"Using Vertex AI with model {client_model}.")
-        return anthropic.AnthropicVertex(), client_model
-    elif model.startswith("ollama/"):
-        print(f"Using Ollama with model {model}.")
-        return openai.OpenAI(
-            api_key=os.environ.get("OLLAMA_API_KEY", ""),
-            base_url="http://localhost:11434/v1",
-        ), model
-    elif "gpt" in model:
-        print(f"Using OpenAI API with model {model}.")
-        return openai.OpenAI(), model
-    elif "o1" in model or "o3" in model:
-        print(f"Using OpenAI API with model {model}.")
-        return openai.OpenAI(), model
-    elif model == "deepseek-coder-v2-0724":
-        print(f"Using OpenAI API with {model}.")
-        return (
-            openai.OpenAI(
-                api_key=os.environ["DEEPSEEK_API_KEY"],
-                base_url="https://api.deepseek.com",
-            ),
-            model,
+    """Create client based strictly on llm_config.yaml entries.
+
+    Only three top-level model keys are recognized (llm, vlm, code).
+    Client types must be either "openai" or "anthropic" and an api_key
+    must be provided directly in the configuration. Environment variables
+    are no longer consulted and there is no built-in fallback logic for
+    arbitrary model name patterns.
+    """
+    config = load_llm_config()
+    if not config or "models" not in config or model not in config["models"]:
+        raise ValueError(
+            f"模型 '{model}' 未在配置文件中定义。请在 llm_config.yaml 中使用 llm、vlm 或 code 之一。"
         )
-    elif model == "deepcoder-14b":
-        print(f"Using HuggingFace API with {model}.")
-        # Using OpenAI client with HuggingFace API
-        if "HUGGINGFACE_API_KEY" not in os.environ:
-            raise ValueError("HUGGINGFACE_API_KEY environment variable not set")
-        return (
-            openai.OpenAI(
-                api_key=os.environ["HUGGINGFACE_API_KEY"],
-                base_url="https://api-inference.huggingface.co/models/agentica-org/DeepCoder-14B-Preview",
-            ),
-            model,
+    model_config = config["models"][model]
+
+    client_type = model_config.get("client_type", "").lower()
+    if client_type not in ("openai", "anthropic"):
+        raise ValueError(
+            f"不支持的 client_type: {client_type} (模型: {model})，仅允许 openai 或 anthropic"
         )
-    elif model == "llama3.1-405b":
-        print(f"Using OpenAI API with {model}.")
-        return (
-            openai.OpenAI(
-                api_key=os.environ["OPENROUTER_API_KEY"],
-                base_url="https://openrouter.ai/api/v1",
-            ),
-            "meta-llama/llama-3.1-405b-instruct",
-        )
-    elif 'gemini' in model:
-        print(f"Using OpenAI API with {model}.")
-        return (
-            openai.OpenAI(
-                api_key=os.environ["GEMINI_API_KEY"],
-                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-            ),
-            model,
-        )
-    else:
-        raise ValueError(f"Model {model} not supported.")
+
+    api_key = model_config.get("api_key")
+    if not api_key:
+        raise ValueError(f"模型 {model} 的配置必须包含 api_key")
+
+    base_url = model_config.get("base_url")
+    config_model_name = model_config.get("model_name", model)
+
+    print(f"使用配置文件中的配置调用模型 {model}")
+
+    if client_type == "openai":
+        if base_url:
+            return openai.OpenAI(api_key=api_key, base_url=base_url), config_model_name
+        return openai.OpenAI(api_key=api_key), config_model_name
+    else:  # anthropic
+        return anthropic.Anthropic(api_key=api_key), config_model_name

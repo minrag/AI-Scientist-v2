@@ -456,11 +456,14 @@ def perform_writeup(
     base_folder,
     no_writing=False,
     num_cite_rounds=20,
-    small_model="gpt-4o-2024-05-13",
-    big_model="o1-2024-12-17",
+    small_model="llm",
+    big_model="llm",
     n_writeup_reflections=3,
     page_limit=8,
 ):
+    # note: small_model and big_model now refer to configuration keys (llm/code)
+    # VLM operations always use the "vlm" key from the same config.
+
     compile_attempt = 0
     base_pdf_file = osp.join(base_folder, f"{osp.basename(base_folder)}")
     latex_folder = osp.join(base_folder, "latex")
@@ -589,7 +592,8 @@ def perform_writeup(
 
         # Generate VLM-based descriptions but do not overwrite plot_names
         try:
-            vlm_client, vlm_model = create_vlm_client(small_model)
+            # vision-language model is fixed to the 'vlm' configuration
+        vlm_client, vlm_model = create_vlm_client("vlm")
             desc_map = {}
             for pf in plot_names:
                 ppath = osp.join(figures_dir, pf)
@@ -768,16 +772,16 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        default="bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0",
+        default="llm",
         choices=AVAILABLE_LLMS,
-        help="Model to use for citation collection (small model).",
+        help="Model key from configuration to use for citation collection (small model).",
     )
     parser.add_argument(
         "--big-model",
         type=str,
-        default="o1-2024-12-17",
+        default="llm",
         choices=AVAILABLE_LLMS,
-        help="Model to use for final writeup (big model).",
+        help="Model key from configuration to use for final writeup (big model).",
     )
     parser.add_argument(
         "--writeup-reflections",

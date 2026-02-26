@@ -2,11 +2,18 @@ import os
 import requests
 import time
 import warnings
+import yaml
+from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import backoff
 
 from ai_scientist.tools.base_tool import BaseTool
+from ai_scientist.utils.config_loader import get_semantic_scholar_api_key
+
+
+# _get_s2_api_key 函数已被移动到 ai_scientist.utils.config_loader 模块
+# 请使用 from ai_scientist.utils.config_loader import get_semantic_scholar_api_key
 
 
 def on_backoff(details: Dict) -> None:
@@ -35,11 +42,11 @@ class SemanticScholarSearchTool(BaseTool):
         ]
         super().__init__(name, description, parameters)
         self.max_results = max_results
-        self.S2_API_KEY = os.getenv("S2_API_KEY")
+        self.S2_API_KEY = get_semantic_scholar_api_key()
         if not self.S2_API_KEY:
             warnings.warn(
                 "No Semantic Scholar API key found. Requests will be subject to stricter rate limits. "
-                "Set the S2_API_KEY environment variable for higher limits."
+                "Set the api_key in llm_config.yaml under 'semantic_scholar' section or use S2_API_KEY environment variable."
             )
 
     def use_tool(self, query: str) -> Optional[str]:
@@ -102,7 +109,7 @@ Abstract: {paper.get("abstract", "No abstract available.")}"""
     backoff.expo, requests.exceptions.HTTPError, on_backoff=on_backoff
 )
 def search_for_papers(query, result_limit=10) -> Union[None, List[Dict]]:
-    S2_API_KEY = os.getenv("S2_API_KEY")
+    S2_API_KEY = get_semantic_scholar_api_key()
     headers = {}
     if not S2_API_KEY:
         warnings.warn(

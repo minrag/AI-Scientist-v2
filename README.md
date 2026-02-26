@@ -62,33 +62,39 @@ Installation usually takes no more than one hour.
 
 ### Supported Models and API Keys
 
-#### OpenAI Models
+Model selection and authentication are now entirely controlled through the
+`llm_config.yaml` file at the project root.  Only three top‑level keys are
+recognized:
 
-By default, the system uses the `OPENAI_API_KEY` environment variable for OpenAI models.
+* `llm` – generic large language model used for most text generation tasks
+* `vlm` – a vision‑language / multimodal model (if your workflow needs images)
+* `code` – a code‑focused model
 
-#### Gemini Models
-
-By default, the system uses the `GEMINI_API_KEY` environment variable for Gemini models through OpenAI API.
-
-#### Claude Models via AWS Bedrock
-
-To use Claude models provided by Amazon Bedrock, install the necessary additional packages:
-```bash
-pip install anthropic[bedrock]
-```
-Next, configure valid [AWS Credentials](https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html) and the target [AWS Region](https://docs.aws.amazon.com/bedrock/latest/userguide/bedrock-regions.html) by setting the following environment variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION_NAME`.
+Each key should specify a `client_type` (`openai` or `anthropic`), an
+`api_key` and optionally a `base_url` and/or an explicit `model_name`.
+See the example configuration in `llm_config.yaml` for details.  No
+environment variables are consulted for model selection; they are only
+required if underlying SDKs (e.g. AWS credentials for Bedrock) depend on
+them.
 
 #### Semantic Scholar API (Literature Search)
 
-Our code can optionally use a Semantic Scholar API Key (`S2_API_KEY`) for higher throughput during literature search [if you have one](https://www.semanticscholar.org/product/api). This is used during both the ideation and paper writing stages. The system should work without it, though you might encounter rate limits or reduced novelty checking during ideation. If you experience issues with Semantic Scholar, you can skip the citation phase during paper generation.
+(The previous environment variable description remains relevant.)
+
+Our code can optionally use a Semantic Scholar API Key (`S2_API_KEY`) for
+higher throughput during literature search [if you have one](https://www.semanticscholar.org/product/api).
+This is used during both the ideation and paper writing stages. The system
+works without it, though you might encounter rate limits or reduced novelty
+checking during ideation. If you experience issues with Semantic Scholar, you
+can skip the citation phase during paper generation.
 
 #### Setting API Keys
 
-Ensure you provide the necessary API keys as environment variables for the models you intend to use. For example:
+Most API keys are now specified directly in `llm_config.yaml`.  Outside of
+that file you only need environment variables for services that inherently
+rely on them, e.g. AWS credentials when using Bedrock with Claude models:
+
 ```bash
-export OPENAI_API_KEY="YOUR_OPENAI_KEY_HERE"
-export S2_API_KEY="YOUR_S2_KEY_HERE"
-# Set AWS credentials if using Bedrock
 # export AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID"
 # export AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_KEY"
 # export AWS_REGION_NAME="your-aws-region"
@@ -104,8 +110,8 @@ Before running the full AI Scientist-v2 experiment pipeline, you first use the `
 
     ```bash
     python ai_scientist/perform_ideation_temp_free.py \
-     --workshop-file "ai_scientist/ideas/my_research_topic.md" \
-     --model gpt-4o-2024-05-13 \
+     --workshop-file "ai_scientist/ideas/i_cant_believe_its_not_better.md" \
+     --model llm \
      --max-num-generations 20 \
      --num-reflections 5
     ```
@@ -145,13 +151,12 @@ python launch_scientist_bfts.py \
  --load_ideas "ai_scientist/ideas/my_research_topic.json" \
  --load_code \
  --add_dataset_ref \
- --model_writeup o1-preview-2024-09-12 \
- --model_citation gpt-4o-2024-11-20 \
- --model_review gpt-4o-2024-11-20 \
- --model_agg_plots o3-mini-2025-01-31 \
+ --model_writeup llm \
+ --model_citation llm \
+ --model_review llm \
+ --model_agg_plots llm \
  --num_cite_rounds 20
 ```
-
 Once the initial experimental stage is complete, you will find a timestamped log folder inside the `experiments/` directory. Navigate to `experiments/"timestamp_ideaname"/logs/0-run/` within that folder to find the tree visualization file `unified_tree_viz.html`.
 After all experiment stages are complete, the writeup stage begins. The writeup stage typically takes about 20 to 30 minutes in total. Once it finishes, you should see `timestamp_ideaname.pdf` in the `timestamp_ideaname` folder.
 For this example run, all stages typically finish within several hours.

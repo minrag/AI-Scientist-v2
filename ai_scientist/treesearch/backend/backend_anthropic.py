@@ -27,8 +27,9 @@ def query(
     client = get_ai_client(model_kwargs.get("model"), max_retries=0)
 
     filtered_kwargs: dict = select_values(notnone, model_kwargs)  # type: ignore
-    if "max_tokens" not in filtered_kwargs:
-        filtered_kwargs["max_tokens"] = 8192  # default for Claude models
+    # Note: we intentionally do **not** inject a default ``max_tokens`` value
+    # here.  The top-level code should refrain from specifying this parameter
+    # when making queries so that the underlying API can use its own defaults.
 
     if func_spec is not None:
         raise NotImplementedError(

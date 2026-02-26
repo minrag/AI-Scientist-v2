@@ -85,20 +85,20 @@ def parse_arguments():
     parser.add_argument(
         "--model_agg_plots",
         type=str,
-        default="o3-mini-2025-01-31",
-        help="Model to use for plot aggregation",
+        default="llm",
+        help="Model key from configuration to use for plot aggregation (llm/vlm/code)",
     )
     parser.add_argument(
         "--model_writeup",
         type=str,
-        default="o1-preview-2024-09-12",
-        help="Model to use for writeup",
+        default="llm",
+        help="Model key from configuration to use for writeup (llm/vlm/code)",
     )
     parser.add_argument(
         "--model_citation",
         type=str,
-        default="gpt-4o-2024-11-20",
-        help="Model to use for citation gathering",
+        default="llm",
+        help="Model key from configuration to use for citation gathering (llm/vlm/code)",
     )
     parser.add_argument(
         "--num_cite_rounds",
@@ -109,14 +109,14 @@ def parse_arguments():
     parser.add_argument(
         "--model_writeup_small",
         type=str,
-        default="gpt-4o-2024-05-13",
-        help="Smaller model to use for writeup",
+        default="llm",
+        help="Smaller model key from configuration to use for writeup (llm/vlm/code)",
     )
     parser.add_argument(
         "--model_review",
         type=str,
-        default="gpt-4o-2024-11-20",
-        help="Model to use for review main text and captions",
+        default="llm",
+        help="Model key from configuration to use for review main text and captions (llm/vlm/code)",
     )
     parser.add_argument(
         "--skip_writeup",

@@ -21,9 +21,10 @@ exec:
   format_tb_ipython: False
 
 generate_report: True
-# LLM settings for final report from journal
+# LLM settings for final report from journal.  Use a configuration key (llm/vlm/code)
+# rather than a raw API name; the code now looks up the client via llm_config.yaml.
 report:
-  model: gpt-4o-2024-11-20
+  model: llm
   temp: 1.0
 
 experiment:
@@ -54,19 +55,20 @@ agent:
 
   # LLM settings for coding
   code:
-    model: anthropic.claude-3-5-sonnet-20241022-v2:0
+    # use the configuration key for the code-generation model
+    model: code
     temp: 1.0
     max_tokens: 12000
 
   # LLM settings for evaluating program output / tracebacks
   feedback:
-    model: gpt-4o-2024-11-20
-    # gpt-4o
+    # feedback models also refer to the configuration key
+    model: llm
     temp: 0.5
     max_tokens: 8192
 
   vlm_feedback:
-    model: gpt-4o-2024-11-20
+    model: vlm
     temp: 0.5
     max_tokens: null
 

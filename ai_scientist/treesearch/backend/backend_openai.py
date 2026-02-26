@@ -17,15 +17,16 @@ OPENAI_TIMEOUT_EXCEPTIONS = (
     openai.InternalServerError,
 )
 
-def get_ai_client(model: str, max_retries=2) -> openai.OpenAI:
-    if model.startswith("ollama/"):
-        client = openai.OpenAI(
-            base_url="http://localhost:11434/v1", 
-            max_retries=max_retries
-        )
-    else:
-        client = openai.OpenAI(max_retries=max_retries)
-    return client
+def get_ai_client(model: str, base_url: str | None = None, max_retries=2) -> openai.OpenAI:
+    """Return a generic OpenAI-compatible client.
+
+    The caller can supply a ``base_url`` (for non-OpenAI endpoints) via
+    keyword arguments; the model string itself is no longer examined.
+    """
+    kwargs = {"max_retries": max_retries}
+    if base_url:
+        kwargs["base_url"] = base_url
+    return openai.OpenAI(**kwargs)
 
 
 def query(
@@ -34,7 +35,12 @@ def query(
     func_spec: FunctionSpec | None = None,
     **model_kwargs,
 ) -> tuple[OutputType, float, int, int, dict]:
-    client = get_ai_client(model_kwargs.get("model"), max_retries=0)
+    # model_kwargs may include 'base_url' or other configuration fields
+    client = get_ai_client(
+        model_kwargs.get("model"),
+        base_url=model_kwargs.get("base_url"),
+        max_retries=0,
+    )
     filtered_kwargs: dict = select_values(notnone, model_kwargs)  # type: ignore
 
     messages = opt_messages_to_list(system_message, user_message)
@@ -43,9 +49,6 @@ def query(
         filtered_kwargs["tools"] = [func_spec.as_openai_tool_dict]
         # force the model to use the function
         filtered_kwargs["tool_choice"] = func_spec.openai_tool_choice_dict
-
-    if filtered_kwargs.get("model", "").startswith("ollama/"):
-       filtered_kwargs["model"] = filtered_kwargs["model"].replace("ollama/", "")
 
     t0 = time.time()
     completion = backoff_create(

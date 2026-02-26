@@ -433,7 +433,6 @@ def detect_duplicate_figures(client, client_model, pdf_path):
         response = client.chat.completions.create(
             model=client_model,
             messages=messages,
-            max_tokens=1000,
         )
 
         analysis = response.choices[0].message.content

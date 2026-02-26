@@ -742,7 +742,7 @@ def filter_experiment_summaries(exp_summaries, step_name):
     return filtered_summaries
 
 
-def gather_citations(base_folder, num_cite_rounds=20, small_model="gpt-4o-2024-05-13"):
+def gather_citations(base_folder, num_cite_rounds=20, small_model="llm"):
     """
     Gather citations for a paper, with ability to resume from previous progress.
 
@@ -859,8 +859,8 @@ def perform_writeup(
     citations_text=None,
     no_writing=False,
     num_cite_rounds=20,
-    small_model="gpt-4o-2024-05-13",
-    big_model="o1-2024-12-17",
+    small_model="llm",
+    big_model="llm",
     n_writeup_reflections=3,
     page_limit=4,
 ):
@@ -950,7 +950,7 @@ def perform_writeup(
 
         # Generate VLM-based descriptions
         try:
-            vlm_client, vlm_model = create_vlm_client(small_model)
+            vlm_client, vlm_model = create_vlm_client("vlm")
             desc_map = {}
             for pf in plot_names:
                 ppath = osp.join(figures_dir, pf)
@@ -1250,16 +1250,16 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        default="bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0",
+        default="llm",
         choices=AVAILABLE_LLMS,
-        help="Model to use for citation collection (small model).",
+        help="Model key from configuration to use for citation collection (small model).",
     )
     parser.add_argument(
         "--big-model",
         type=str,
-        default="o1-2024-12-17",
+        default="llm",
         choices=AVAILABLE_LLMS,
-        help="Model to use for final writeup (big model).",
+        help="Model key from configuration to use for final writeup (big model).",
     )
     parser.add_argument(
         "--writeup-reflections",
