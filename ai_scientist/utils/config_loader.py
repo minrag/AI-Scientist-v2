@@ -5,7 +5,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 # 配置缓存
 _config_cache: Optional[dict] = None
@@ -89,6 +89,82 @@ def get_semantic_scholar_api_key() -> Optional[str]:
 
     # 回退到环境变量
     return os.getenv("S2_API_KEY")
+
+
+def get_open_alex_email() -> Optional[str]:
+    """获取 OpenAlex API 邮箱地址
+
+    从配置文件的 open_alex.email 读取。
+
+    Returns:
+        str: 邮箱地址，如果不存在则返回 None
+    """
+    config = load_llm_config()
+
+    if config and "open_alex" in config:
+        email = config["open_alex"].get("email", "").strip()
+        if email:
+            return email
+
+    return None
+
+
+def get_open_alex_api_key() -> Optional[str]:
+    """获取 OpenAlex API 密钥（可选）
+
+    从配置文件的 open_alex.api_key 读取。
+
+    Returns:
+        str: API 密钥，如果不存在则返回 None
+    """
+    config = load_llm_config()
+
+    if config and "open_alex" in config:
+        api_key = config["open_alex"].get("api_key", "").strip()
+        if api_key:
+            return api_key
+
+    return None
+
+
+def get_open_alex_config() -> Dict[str, Any]:
+    """获取 OpenAlex 完整配置
+
+    Returns:
+        dict: OpenAlex配置字典，包含email, api_key, base_url等字段
+    """
+    config = load_llm_config()
+    default_config = {
+        "email": None,
+        "api_key": None,
+        "base_url": "https://api.openalex.org"
+    }
+
+    if config and "open_alex" in config:
+        open_alex_config = config["open_alex"]
+        for key in default_config:
+            if key in open_alex_config:
+                default_config[key] = open_alex_config[key]
+
+    return default_config
+
+
+def get_default_academic_search_tool() -> str:
+    """获取默认学术搜索工具
+
+    Returns:
+        str: 默认工具名称， "semantic_scholar" 或 "open_alex"
+    """
+    config = load_llm_config()
+    default_tool = "open_alex"  # 默认使用OpenAlex
+
+    if config and "academic_search" in config:
+        academic_config = config["academic_search"]
+        tool = academic_config.get("default_tool", "").strip()
+        if tool in ["semantic_scholar", "open_alex"]:
+            return tool
+
+    return default_tool
 
 
 def clear_config_cache() -> None:

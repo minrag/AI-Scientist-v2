@@ -16,7 +16,7 @@ from ai_scientist.llm import (
     AVAILABLE_LLMS,
 )
 
-from ai_scientist.tools.semantic_scholar import search_for_papers
+from ai_scientist.tools import search_for_papers
 
 from ai_scientist.perform_vlm_review import generate_vlm_img_review
 from ai_scientist.vlm import create_client as create_vlm_client
@@ -593,7 +593,7 @@ def perform_writeup(
         # Generate VLM-based descriptions but do not overwrite plot_names
         try:
             # vision-language model is fixed to the 'vlm' configuration
-        vlm_client, vlm_model = create_vlm_client("vlm")
+            vlm_client, vlm_model = create_vlm_client("vlm")
             desc_map = {}
             for pf in plot_names:
                 ppath = osp.join(figures_dir, pf)

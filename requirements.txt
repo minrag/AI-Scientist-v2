@@ -21,6 +21,7 @@ funcy
 black
 genson
 shutup
+pyalex
 python-igraph
 coolname
 jsonschema

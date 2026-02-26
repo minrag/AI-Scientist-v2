@@ -77,16 +77,22 @@ environment variables are consulted for model selection; they are only
 required if underlying SDKs (e.g. AWS credentials for Bedrock) depend on
 them.
 
-#### Semantic Scholar API (Literature Search)
+#### Academic Search APIs (Literature Search)
 
-(The previous environment variable description remains relevant.)
+The AI Scientist-v2 supports two academic search APIs for literature review: OpenAlex (default) and Semantic Scholar. You can configure which service to use in the `llm_config.yaml` file.
 
-Our code can optionally use a Semantic Scholar API Key (`S2_API_KEY`) for
-higher throughput during literature search [if you have one](https://www.semanticscholar.org/product/api).
-This is used during both the ideation and paper writing stages. The system
-works without it, though you might encounter rate limits or reduced novelty
-checking during ideation. If you experience issues with Semantic Scholar, you
-can skip the citation phase during paper generation.
+**OpenAlex (Recommended Default)**
+- OpenAlex is an open catalog of the global research system. It's free to use with reasonable rate limits.
+- To use OpenAlex, add your email address in the `open_alex.email` field in `llm_config.yaml` (required for polite API usage).
+- Optional: Add an `open_alex.api_key` if you have one for higher rate limits.
+- By default, the system uses OpenAlex as the search tool.
+
+**Semantic Scholar**
+- Semantic Scholar API can be used as an alternative search service.
+- To use Semantic Scholar, set `academic_search.default_tool: "semantic_scholar"` in `llm_config.yaml`.
+- Add your Semantic Scholar API Key in the `semantic_scholar.api_key` field, or use the `S2_API_KEY` environment variable.
+
+Both search tools are used during the ideation and paper writing stages for literature review and citation gathering. The system works without API keys, though you might encounter rate limits or reduced novelty checking during ideation. If you experience issues with any search API, you can skip the citation phase during paper generation.
 
 #### Setting API Keys
 
@@ -102,7 +108,7 @@ rely on them, e.g. AWS credentials when using Bedrock with Claude models:
 
 ## Generate Research Ideas
 
-Before running the full AI Scientist-v2 experiment pipeline, you first use the `ai_scientist/perform_ideation_temp_free.py` script to generate potential research ideas. This script uses an LLM to brainstorm and refine ideas based on a high-level topic description you provide, interacting with tools like Semantic Scholar to check for novelty.
+Before running the full AI Scientist-v2 experiment pipeline, you first use the `ai_scientist/perform_ideation_temp_free.py` script to generate potential research ideas. This script uses an LLM to brainstorm and refine ideas based on a high-level topic description you provide, interacting with academic search tools (OpenAlex or Semantic Scholar) to check for novelty.
 
 1.  **Prepare a Topic Description:** Create a Markdown file (e.g., `my_research_topic.md`) describing the research area or theme you want the AI to explore. This file should contain sections like `Title`, `Keywords`, `TL;DR`, and `Abstract` to define the scope of the research. Refer to the example file `ai_scientist/ideas/i_cant_believe_its_not_better.md` for the expected structure and content format. Place your file in a location accessible by the script (e.g., the `ai_scientist/ideas/` directory).
 
@@ -188,9 +194,9 @@ The ideation step cost depends on the LLM used and the number of generations/ref
 
 First, perform the [Generate Research Ideas](#generate-research-ideas) step. Create a new Markdown file describing your desired subject field or topic, following the structure of the example `ai_scientist/ideas/i_cant_believe_its_not_better.md`. Run the `perform_ideation_temp_free.py` script with this file to generate a corresponding JSON idea file. Then, proceed to the [Run AI Scientist-v2 Paper Generation Experiments](#run-ai-scientist-v2-paper-generation-experiments) step, using this JSON file with the `launch_scientist_bfts.py` script via the `--load_ideas` argument.
 
-**What should I do if I have problems accessing the Semantic Scholar API?**
+**What should I do if I have problems accessing the academic search APIs (OpenAlex or Semantic Scholar)?**
 
-The Semantic Scholar API is used to assess the novelty of generated ideas and to gather citations during the paper write-up phase. If you don't have an API key, encounter rate limits, you may be able to skip these phases.
+The academic search APIs (OpenAlex or Semantic Scholar) are used to assess the novelty of generated ideas and to gather citations during the paper write-up phase. If you don't have an API key, encounter rate limits, or experience other issues, you may be able to skip these phases. By default, the system uses OpenAlex which works without an API key (though adding your email is recommended for polite usage).
 
 **I encountered a "CUDA Out of Memory" error. What can I do?**
 

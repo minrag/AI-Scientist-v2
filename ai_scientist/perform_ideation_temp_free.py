@@ -14,15 +14,16 @@ from ai_scientist.llm import (
     get_response_from_llm,
 )
 
-from ai_scientist.tools.semantic_scholar import SemanticScholarSearchTool
+from ai_scientist.tools import get_default_search_tool
 from ai_scientist.tools.base_tool import BaseTool
 
-# Create tool instances
-semantic_scholar_tool = SemanticScholarSearchTool()
+# Create tool instances using the configured default search tool
+search_tool = get_default_search_tool()
+search_tool_name = search_tool.name
 
 # Define tools at the top of the file
 tools = [
-    semantic_scholar_tool,
+    search_tool,
     {
         "name": "FinalizeIdea",
         "description": """Finalize your idea by providing the idea details.
@@ -72,7 +73,7 @@ ACTION:
 <The action to take, exactly one of {tool_names_str}>
 
 ARGUMENTS:
-<If ACTION is "SearchSemanticScholar", provide the search query as {{"query": "your search query"}}. If ACTION is "FinalizeIdea", provide the idea details as {{"idea": {{ ... }}}} with the IDEA JSON specified below.>
+<If ACTION is "{search_tool_name}", provide the search query as {{"query": "your search query"}}. If ACTION is "FinalizeIdea", provide the idea details as {{"idea": {{ ... }}}} with the IDEA JSON specified below.>
 
 If you choose to finalize your idea, provide the IDEA JSON in the arguments:
 
