@@ -270,14 +270,14 @@ def annotate_history(journal, cfg=None):
                         model = cfg.agent.summary.model
                     else:
                         model = "llm"
-                    client = get_ai_client(model)
+                    client, model_name = get_ai_client(model)
                     response = get_response_from_llm(
                         overall_plan_summarizer_prompt.format(
                             prev_overall_plan=node.parent.overall_plan,
                             current_plan=node.plan,
                         ),
                         client,
-                        model,
+                        model_name,
                         report_summarizer_sys_msg,
                     )
                     node.overall_plan = extract_json_between_markers(response[0])[
@@ -342,8 +342,8 @@ def overall_summarize(journals, cfg=None):
                 model = cfg.agent.summary.get("model", "")
             else:
                 model = "llm"
-            client = get_ai_client(model)
-            summary_json = get_stage_summary(journal, stage_name, model, client)
+            client, model_name = get_ai_client(model)
+            summary_json = get_stage_summary(journal, stage_name, model_name, client)
             return summary_json
 
     from tqdm import tqdm

@@ -1,15 +1,22 @@
 from . import backend_anthropic, backend_openai
 from .utils import FunctionSpec, OutputType, PromptType, compile_prompt_to_md
 from ai_scientist.llm import _get_model_config
+from typing import Any
 
-def get_ai_client(model: str, **model_kwargs):
-    """Return an AI client based on configuration key or raw name.
+def get_ai_client(model: str, **model_kwargs) -> tuple[Any, str]:
+    """Return an AI client and model name based on configuration key or raw name.
 
     If ``model`` corresponds to one of the configured keys (llm/vlm/code),
     the client_type from the configuration is used to pick the backend.  For
     backward compatibility, raw API model strings will continue to use substring
     heuristics.
+
+    Returns:
+        tuple[Any, str]: A tuple containing (client, model_name), where client is
+        an instance of anthropic.Anthropic or openai.OpenAI, and model_name is the
+        actual API model name extracted from configuration.
     """
+
     cfg = _get_model_config(model)
     if not cfg:
         raise ValueError(
@@ -20,8 +27,7 @@ def get_ai_client(model: str, **model_kwargs):
     # 从配置中提取
     api_key = cfg.get("api_key")
     base_url = cfg.get("base_url")
-    model_name= cfg.get("model_name")
-
+    model_name = cfg.get("model_name", model)
 
     # 移除可能重复的键，避免传递给后端函数时出现重复参数错误
     model_kwargs.pop("model", None)
@@ -29,11 +35,12 @@ def get_ai_client(model: str, **model_kwargs):
     model_kwargs.pop("base_url", None)
 
     # 确定要传递给后端函数的 model 值
-    
+
     if client_type == "anthropic":
-        return backend_anthropic.get_ai_client(model=model_name, base_url=base_url, api_key=api_key, **model_kwargs)
+        client = backend_anthropic.get_ai_client(model=model_name, base_url=base_url, api_key=api_key, **model_kwargs)
     else:
-        return backend_openai.get_ai_client(model=model_name, base_url=base_url, api_key=api_key, **model_kwargs)
+        client = backend_openai.get_ai_client(model=model_name, base_url=base_url, api_key=api_key, **model_kwargs)
+    return client, model_name
 
 def query(
     system_message: PromptType | None,
