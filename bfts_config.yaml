@@ -36,7 +36,7 @@ debug:
 # agent hyperparams
 agent:
   type: parallel
-  num_workers: 4
+  num_workers: 2 ## 同时跑几个实验进程(并行数量)
   stages:
     stage1_max_iters: 20
     stage2_max_iters: 12
@@ -47,7 +47,7 @@ agent:
   # whether to instruct the agent to use CV (set to 1 to disable)
   k_fold_validation: 1
   multi_seed_eval:
-    num_seeds: 3 # should be the same as num_workers if num_workers < 3. Otherwise, set it to be 3.
+    num_seeds: 3 # 每个模型训练几次 should be the same as num_workers if num_workers < 3. Otherwise, set it to be 3.
   # whether to instruct the agent to generate a prediction function
   expose_prediction: False
   # whether to provide the agent with a preview of the data
@@ -75,7 +75,7 @@ agent:
   search:
     max_debug_depth: 3
     debug_prob: 0.5
-    num_drafts: 3
+    num_drafts: 3 ## 每轮生成多少版本
 
   # Options for summarizing findings and selecting the best node
   # If not specified, the default behavior will be used.
