@@ -397,9 +397,11 @@ class MinimalAgent:
     def _prompt_resp_fmt(self):
         return {
             "Response format": (
-                "Your response should be a brief outline/sketch of your proposed solution in natural language (7-10 sentences), "
-                "followed by a single markdown code block (using the format ```python ... ```) which implements this solution and prints out the evaluation metric(s) if applicable. "
+                "Your response should be a brief outline/sketch of your proposed solution in natural language (7-10 sentences). "
+                "Do NOT include any explanatory text about code structure or syntax errors in the natural language part. "
+                "After the natural language outline, output a single markdown code block (using the format ```python ... ```) which implements this solution and prints out the evaluation metric(s) if applicable. "
                 "There should be no additional headings or text in your response. Just natural language text followed by a newline and then the markdown code block. "
+                "The code block must contain only valid Python code starting with imports, without any explanatory comments or natural language descriptions inside the code block. "
                 "Make sure to write concise code."
             )
         }
@@ -407,9 +409,11 @@ class MinimalAgent:
     def _prompt_metricparse_resp_fmt(self):
         return {
             "Response format": (
-                "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences), "
-                "followed by a single markdown code block (using the format ```python ... ```) which implements the full code for the metric parsing. "
+                "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences). "
+                "Do NOT include any explanatory text about code structure or syntax errors in the natural language part. "
+                "After the natural language outline, output a single markdown code block (using the format ```python ... ```) which implements the full code for the metric parsing. "
                 "There should be no additional headings or text in your response. Just natural language text followed by a newline and then the markdown code block. "
+                "The code block must contain only valid Python code starting with imports, without any explanatory comments or natural language descriptions inside the code block. "
                 "Your generated code should be complete and executable. "
             )
         }
@@ -418,9 +422,11 @@ class MinimalAgent:
     def _prompt_debug_resp_fmt(self):
         return {
             "Response format": (
-                "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences), "
-                "followed by a single markdown code block (using the format ```python ... ```) which implements the full code including the bugfix/solution. "
+                "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences). "
+                "Do NOT include any explanatory text about syntax errors or code structure in the natural language part. "
+                "After the natural language outline, output a single markdown code block (using the format ```python ... ```) which implements the full code including the bugfix/solution. "
                 "There should be no additional headings or text in your response. Just natural language text followed by a newline and then the markdown code block. "
+                "The code block must contain only valid Python code starting with imports, without any explanatory comments or natural language descriptions inside the code block. "
                 "Your generated code should be complete and executable. Do not omit any part of the code, even if it was part of a previous implementation."
                 "Make sure to write concise code."
             )
@@ -430,10 +436,12 @@ class MinimalAgent:
     def _prompt_hyperparam_tuning_resp_fmt(self):
         return {
             "Response format": (
-                "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences), "
-                "followed by a single markdown code block (using the format ```python ... ```) which implements the full code including hyperparameter tuning. "
-                "There should be no additional headings or text in your response. Do not omit any part of the code, "
-                "Your generated code should be complete and executable."
+                "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences). "
+                "Do NOT include any explanatory text about code structure or syntax errors in the natural language part. "
+                "After the natural language outline, output a single markdown code block (using the format ```python ... ```) which implements the full code including hyperparameter tuning. "
+                "There should be no additional headings or text in your response. Just natural language text followed by a newline and then the markdown code block. "
+                "The code block must contain only valid Python code starting with imports, without any explanatory comments or natural language descriptions inside the code block. "
+                "Do not omit any part of the code. Your generated code should be complete and executable."
                 "Make sure to write concise code."
             )
         }
@@ -442,10 +450,12 @@ class MinimalAgent:
     def _prompt_ablation_resp_fmt(self):
         return {
             "Response format": (
-                "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences), "
-                "followed by a single markdown code block (using the format ```python ... ```) which implements the full code including the ablation study. "
-                "There should be no additional headings or text in your response. Do not omit any part of the code, "
-                "Your generated code should be complete and executable."
+                "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences). "
+                "Do NOT include any explanatory text about code structure or syntax errors in the natural language part. "
+                "After the natural language outline, output a single markdown code block (using the format ```python ... ```) which implements the full code including the ablation study. "
+                "There should be no additional headings or text in your response. Just natural language text followed by a newline and then the markdown code block. "
+                "The code block must contain only valid Python code starting with imports, without any explanatory comments or natural language descriptions inside the code block. "
+                "Do not omit any part of the code. Your generated code should be complete and executable."
                 "Make sure to write concise code."
             )
         }
@@ -480,6 +490,14 @@ class MinimalAgent:
 
         if self.cfg.agent.data_preview:
             prompt["Data Overview"] = self.data_preview
+
+        # If using code-generation model, emphasize code-only output
+        if hasattr(self.cfg.agent, 'code') and hasattr(self.cfg.agent.code, 'model'):
+            if self.cfg.agent.code.model == 'code':
+                prompt["Instructions"]["Code model emphasis"] = (
+                    "You are using a code-generation model. Your response should focus on producing clean, executable Python code. "
+                    "The natural language outline should be concise, and the code block must be complete and runnable without any additional explanation."
+                )
 
         print("[cyan]--------------------------------[/cyan]")
         print("[cyan]self.task_desc[/cyan]")
@@ -516,6 +534,14 @@ class MinimalAgent:
 
         if self.cfg.agent.data_preview:
             prompt["Data Overview"] = self.data_preview
+
+        # If using code-generation model, emphasize code-only output
+        if hasattr(self.cfg.agent, 'code') and hasattr(self.cfg.agent.code, 'model'):
+            if self.cfg.agent.code.model == 'code':
+                prompt["Instructions"]["Code model emphasis"] = (
+                    "You are using a code-generation model. Your response should focus on producing clean, executable Python code. "
+                    "The natural language outline should be concise, and the code block must be complete and runnable without any additional explanation."
+                )
 
         plan, code = self.plan_and_code_query(prompt)
         return Node(plan=plan, code=code, parent=parent_node)

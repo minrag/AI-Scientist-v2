@@ -20,6 +20,7 @@ dataclasses-json
 funcy
 black
 genson
+scikit-learn
 shutup
 pyalex
 python-igraph
