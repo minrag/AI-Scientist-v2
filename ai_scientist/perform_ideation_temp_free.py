@@ -9,10 +9,9 @@ import sys
 
 sys.path.append(osp.join(osp.dirname(__file__), ".."))
 from ai_scientist.llm import (
-    AVAILABLE_LLMS,
-    create_client,
     get_response_from_llm,
 )
+from ai_scientist.utils.model_config import create_client
 
 from ai_scientist.tools.semantic_scholar import SemanticScholarSearchTool
 from ai_scientist.tools.base_tool import BaseTool
@@ -273,9 +272,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        default="gpt-4o-2024-05-13",
-        choices=AVAILABLE_LLMS,
-        help="Model to use for AI Scientist.",
+        default="llm",
+        help="Model type to use for AI Scientist (references config.yaml).",
     )
     parser.add_argument(
         "--max-num-generations",

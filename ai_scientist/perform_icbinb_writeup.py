@@ -13,9 +13,8 @@ import tempfile
 from ai_scientist.llm import (
     get_response_from_llm,
     extract_json_between_markers,
-    create_client,
-    AVAILABLE_LLMS,
 )
+from ai_scientist.utils.model_config import create_client
 
 from ai_scientist.utils.token_tracker import track_token_usage
 
@@ -742,7 +741,7 @@ def filter_experiment_summaries(exp_summaries, step_name):
     return filtered_summaries
 
 
-def gather_citations(base_folder, num_cite_rounds=20, small_model="gpt-4o-2024-05-13"):
+def gather_citations(base_folder, num_cite_rounds=20, small_model="small_model"):
     """
     Gather citations for a paper, with ability to resume from previous progress.
 
@@ -859,8 +858,8 @@ def perform_writeup(
     citations_text=None,
     no_writing=False,
     num_cite_rounds=20,
-    small_model="gpt-4o-2024-05-13",
-    big_model="o1-2024-12-17",
+    small_model="small_model",
+    big_model="writeup",
     n_writeup_reflections=3,
     page_limit=4,
 ):
@@ -950,7 +949,8 @@ def perform_writeup(
 
         # Generate VLM-based descriptions
         try:
-            vlm_client, vlm_model = create_vlm_client(small_model)
+            # Use the vlm model type from config for VLM tasks
+            vlm_client, vlm_model = create_vlm_client("vlm")
             desc_map = {}
             for pf in plot_names:
                 ppath = osp.join(figures_dir, pf)
@@ -1250,16 +1250,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        default="bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0",
-        choices=AVAILABLE_LLMS,
-        help="Model to use for citation collection (small model).",
+        default="small_model",
+        help="Model type to use for citation collection (references config.yaml).",
     )
     parser.add_argument(
         "--big-model",
         type=str,
-        default="o1-2024-12-17",
-        choices=AVAILABLE_LLMS,
-        help="Model to use for final writeup (big model).",
+        default="writeup",
+        help="Model type to use for final writeup (references config.yaml).",
     )
     parser.add_argument(
         "--writeup-reflections",

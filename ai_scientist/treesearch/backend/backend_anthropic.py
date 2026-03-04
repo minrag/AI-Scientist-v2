@@ -1,9 +1,10 @@
 import time
-import os
 
 from .utils import FunctionSpec, OutputType, opt_messages_to_list, backoff_create
 from funcy import notnone, once, select_values
 import anthropic
+
+from ai_scientist.utils.model_config import load_model_config
 
 
 ANTHROPIC_TIMEOUT_EXCEPTIONS = (
@@ -14,9 +15,26 @@ ANTHROPIC_TIMEOUT_EXCEPTIONS = (
     anthropic.APIStatusError,
 )
 
-def get_ai_client(model : str, max_retries=2) -> anthropic.AnthropicBedrock:
-    client = anthropic.AnthropicBedrock(max_retries=max_retries)
-    return client
+
+def get_ai_client(model_type: str, max_retries=2) -> anthropic.Anthropic:
+    """Get Anthropic client configured from config.yaml.
+
+    Args:
+        model_type: Model type key from config.yaml (e.g., "code")
+        max_retries: Maximum number of retries for API calls
+
+    Returns:
+        Configured Anthropic client instance
+    """
+    config = load_model_config(model_type)
+
+    client_kwargs = {}
+    if config["api_key"]:
+        client_kwargs["api_key"] = config["api_key"]
+    client_kwargs["max_retries"] = max_retries
+
+    return anthropic.Anthropic(**client_kwargs)
+
 
 def query(
     system_message: str | None,
@@ -24,11 +42,26 @@ def query(
     func_spec: FunctionSpec | None = None,
     **model_kwargs,
 ) -> tuple[OutputType, float, int, int, dict]:
-    client = get_ai_client(model_kwargs.get("model"), max_retries=0)
+    """Query Anthropic API.
 
-    filtered_kwargs: dict = select_values(notnone, model_kwargs)  # type: ignore
-    if "max_tokens" not in filtered_kwargs:
-        filtered_kwargs["max_tokens"] = 8192  # default for Claude models
+    Args:
+        system_message: System message
+        user_message: User message
+        func_spec: Optional function specification (not supported yet)
+        **model_kwargs: Additional model parameters including 'model', 'temperature'
+
+    Returns:
+        Tuple of (output, request_time, input_tokens, output_tokens, info)
+    """
+    model_type = model_kwargs.get("model")
+    client = get_ai_client(model_type, max_retries=0)
+
+    # Get actual model name from config
+    config = load_model_config(model_type)
+    model_name = config["model_name"]
+
+    filtered_kwargs: dict = select_values(notnone, model_kwargs)
+    filtered_kwargs["model"] = model_name
 
     if func_spec is not None:
         raise NotImplementedError(
@@ -54,7 +87,6 @@ def query(
         **filtered_kwargs,
     )
     req_time = time.time() - t0
-    print(filtered_kwargs)
 
     if "thinking" in filtered_kwargs:
         assert (

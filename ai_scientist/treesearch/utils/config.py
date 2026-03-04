@@ -38,7 +38,6 @@ class StageConfig:
     temp: float
     thinking: ThinkingConfig
     betas: str
-    max_tokens: Optional[int] = None
 
 
 @dataclass

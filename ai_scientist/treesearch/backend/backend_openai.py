@@ -7,6 +7,8 @@ from funcy import notnone, once, select_values
 import openai
 from rich import print
 
+from ai_scientist.utils.model_config import load_model_config
+
 logger = logging.getLogger("ai-scientist")
 
 
@@ -17,15 +19,27 @@ OPENAI_TIMEOUT_EXCEPTIONS = (
     openai.InternalServerError,
 )
 
-def get_ai_client(model: str, max_retries=2) -> openai.OpenAI:
-    if model.startswith("ollama/"):
-        client = openai.OpenAI(
-            base_url="http://localhost:11434/v1", 
-            max_retries=max_retries
-        )
-    else:
-        client = openai.OpenAI(max_retries=max_retries)
-    return client
+
+def get_ai_client(model_type: str, max_retries=2) -> openai.OpenAI:
+    """Get OpenAI client configured from config.yaml.
+
+    Args:
+        model_type: Model type key from config.yaml (e.g., "llm", "vlm")
+        max_retries: Maximum number of retries for API calls
+
+    Returns:
+        Configured OpenAI client instance
+    """
+    config = load_model_config(model_type)
+
+    client_kwargs = {}
+    if config["api_key"]:
+        client_kwargs["api_key"] = config["api_key"]
+    if config["base_url"]:
+        client_kwargs["base_url"] = config["base_url"]
+    client_kwargs["max_retries"] = max_retries
+
+    return openai.OpenAI(**client_kwargs)
 
 
 def query(
@@ -34,8 +48,26 @@ def query(
     func_spec: FunctionSpec | None = None,
     **model_kwargs,
 ) -> tuple[OutputType, float, int, int, dict]:
-    client = get_ai_client(model_kwargs.get("model"), max_retries=0)
-    filtered_kwargs: dict = select_values(notnone, model_kwargs)  # type: ignore
+    """Query OpenAI API.
+
+    Args:
+        system_message: System message
+        user_message: User message
+        func_spec: Optional function specification for tool calling
+        **model_kwargs: Additional model parameters including 'model', 'temperature'
+
+    Returns:
+        Tuple of (output, request_time, input_tokens, output_tokens, info)
+    """
+    model_type = model_kwargs.get("model")
+    client = get_ai_client(model_type, max_retries=0)
+
+    # Get actual model name from config
+    config = load_model_config(model_type)
+    model_name = config["model_name"]
+
+    filtered_kwargs: dict = select_values(notnone, model_kwargs)
+    filtered_kwargs["model"] = model_name
 
     messages = opt_messages_to_list(system_message, user_message)
 
@@ -43,9 +75,6 @@ def query(
         filtered_kwargs["tools"] = [func_spec.as_openai_tool_dict]
         # force the model to use the function
         filtered_kwargs["tool_choice"] = func_spec.openai_tool_choice_dict
-
-    if filtered_kwargs.get("model", "").startswith("ollama/"):
-       filtered_kwargs["model"] = filtered_kwargs["model"].replace("ollama/", "")
 
     t0 = time.time()
     completion = backoff_create(

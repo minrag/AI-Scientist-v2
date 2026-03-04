@@ -1,6 +1,11 @@
+"""Token tracking utilities for LLM API calls.
+
+This module provides token tracking functionality without price calculations.
+Only token consumption is recorded.
+"""
+
 from functools import wraps
 from typing import Dict, Optional, List
-import tiktoken
 from collections import defaultdict
 import asyncio
 from datetime import datetime
@@ -8,56 +13,19 @@ import logging
 
 
 class TokenTracker:
+    """Tracker for token usage across LLM API calls.
+
+    Tracks token counts for prompt, completion, reasoning, and cached tokens.
+    Also records interaction history (prompts, responses, timestamps).
+    Does NOT calculate costs/pricing.
+    """
+
     def __init__(self):
-        """
-        Token counts for prompt, completion, reasoning, and cached.
-        Reasoning tokens are included in completion tokens.
-        Cached tokens are included in prompt tokens.
-        Also tracks prompts, responses, and timestamps.
-        We assume we get these from the LLM response, and we don't count
-        the tokens by ourselves.
-        """
+        """Initialize the token tracker."""
         self.token_counts = defaultdict(
             lambda: {"prompt": 0, "completion": 0, "reasoning": 0, "cached": 0}
         )
         self.interactions = defaultdict(list)
-
-        self.MODEL_PRICES = {
-            "gpt-4o-2024-11-20": {
-                "prompt": 2.5 / 1000000,  # $2.50 per 1M tokens
-                "cached": 1.25 / 1000000,  # $1.25 per 1M tokens
-                "completion": 10 / 1000000,  # $10.00 per 1M tokens
-            },
-            "gpt-4o-2024-08-06": {
-                "prompt": 2.5 / 1000000,  # $2.50 per 1M tokens
-                "cached": 1.25 / 1000000,  # $1.25 per 1M tokens
-                "completion": 10 / 1000000,  # $10.00 per 1M tokens
-            },
-            "gpt-4o-2024-05-13": {  # this ver does not support cached tokens
-                "prompt": 5.0 / 1000000,  # $5.00 per 1M tokens
-                "completion": 15 / 1000000,  # $15.00 per 1M tokens
-            },
-            "gpt-4o-mini-2024-07-18": {
-                "prompt": 0.15 / 1000000,  # $0.15 per 1M tokens
-                "cached": 0.075 / 1000000,  # $0.075 per 1M tokens
-                "completion": 0.6 / 1000000,  # $0.60 per 1M tokens
-            },
-            "o1-2024-12-17": {
-                "prompt": 15 / 1000000,  # $15.00 per 1M tokens
-                "cached": 7.5 / 1000000,  # $7.50 per 1M tokens
-                "completion": 60 / 1000000,  # $60.00 per 1M tokens
-            },
-            "o1-preview-2024-09-12": {
-                "prompt": 15 / 1000000,  # $15.00 per 1M tokens
-                "cached": 7.5 / 1000000,  # $7.50 per 1M tokens
-                "completion": 60 / 1000000,  # $60.00 per 1M tokens
-            },
-            "o3-mini-2025-01-31": {
-                "prompt": 1.1 / 1000000,  # $1.10 per 1M tokens
-                "cached": 0.55 / 1000000,  # $0.55 per 1M tokens
-                "completion": 4.4 / 1000000,  # $4.40 per 1M tokens
-            },
-        }
 
     def add_tokens(
         self,
@@ -67,6 +35,15 @@ class TokenTracker:
         reasoning_tokens: int,
         cached_tokens: int,
     ):
+        """Add token counts for a single API call.
+
+        Args:
+            model: Model identifier
+            prompt_tokens: Number of tokens in the prompt
+            completion_tokens: Number of tokens in the completion
+            reasoning_tokens: Number of reasoning tokens (subset of completion)
+            cached_tokens: Number of cached tokens (subset of prompt)
+        """
         self.token_counts[model]["prompt"] += prompt_tokens
         self.token_counts[model]["completion"] += completion_tokens
         self.token_counts[model]["reasoning"] += reasoning_tokens
@@ -80,7 +57,15 @@ class TokenTracker:
         response: str,
         timestamp: datetime,
     ):
-        """Record a single interaction with the model."""
+        """Record a single interaction with the model.
+
+        Args:
+            model: Model identifier
+            system_message: System message used
+            prompt: User prompt
+            response: Model response
+            timestamp: When the interaction occurred
+        """
         self.interactions[model].append(
             {
                 "system_message": system_message,
@@ -91,7 +76,14 @@ class TokenTracker:
         )
 
     def get_interactions(self, model: Optional[str] = None) -> Dict[str, List[Dict]]:
-        """Get all interactions, optionally filtered by model."""
+        """Get all interactions, optionally filtered by model.
+
+        Args:
+            model: Optional model to filter by
+
+        Returns:
+            Dictionary of interactions by model
+        """
         if model:
             return {model: self.interactions[model]}
         return dict(self.interactions)
@@ -102,36 +94,17 @@ class TokenTracker:
             lambda: {"prompt": 0, "completion": 0, "reasoning": 0, "cached": 0}
         )
         self.interactions = defaultdict(list)
-        # self._encoders = {}
-
-    def calculate_cost(self, model: str) -> float:
-        """Calculate the cost for a specific model based on token usage."""
-        if model not in self.MODEL_PRICES:
-            logging.warning(f"Price information not available for model {model}")
-            return 0.0
-
-        prices = self.MODEL_PRICES[model]
-        tokens = self.token_counts[model]
-
-        # Calculate cost for prompt and completion tokens
-        if "cached" in prices:
-            prompt_cost = (tokens["prompt"] - tokens["cached"]) * prices["prompt"]
-            cached_cost = tokens["cached"] * prices["cached"]
-        else:
-            prompt_cost = tokens["prompt"] * prices["prompt"]
-            cached_cost = 0
-        completion_cost = tokens["completion"] * prices["completion"]
-
-        return prompt_cost + cached_cost + completion_cost
 
     def get_summary(self) -> Dict[str, Dict[str, int]]:
-        # return dict(self.token_counts)
-        """Get summary of token usage and costs for all models."""
+        """Get summary of token usage for all models.
+
+        Returns:
+            Dictionary with token counts per model
+        """
         summary = {}
         for model, tokens in self.token_counts.items():
             summary[model] = {
                 "tokens": tokens.copy(),
-                "cost (USD)": self.calculate_cost(model),
             }
         return summary
 
@@ -141,6 +114,12 @@ token_tracker = TokenTracker()
 
 
 def track_token_usage(func):
+    """Decorator to track token usage for LLM API calls.
+
+    Wraps async or sync functions that return API response objects
+    with usage information.
+    """
+
     @wraps(func)
     async def async_wrapper(*args, **kwargs):
         prompt = kwargs.get("prompt")
@@ -157,26 +136,34 @@ def track_token_usage(func):
         model = result.model
         timestamp = result.created
 
-        if hasattr(result, "usage") and result.usage.completion_tokens_details is not None:
+        if hasattr(result, "usage") and result.usage:
+            # Get token counts with safe defaults
+            prompt_tokens = result.usage.prompt_tokens if hasattr(result.usage, "prompt_tokens") else 0
+            completion_tokens = result.usage.completion_tokens if hasattr(result.usage, "completion_tokens") else 0
+
+            # Get reasoning tokens if available
+            reasoning_tokens = 0
+            if hasattr(result.usage, "completion_tokens_details") and result.usage.completion_tokens_details:
+                reasoning_tokens = result.usage.completion_tokens_details.reasoning_tokens
+
+            # Get cached tokens if available
+            cached_tokens = 0
+            if hasattr(result.usage, "prompt_tokens_details") and result.usage.prompt_tokens_details:
+                cached_tokens = result.usage.prompt_tokens_details.cached_tokens
+
             token_tracker.add_tokens(
                 model,
-                result.usage.prompt_tokens,
-                result.usage.completion_tokens,
-                result.usage.completion_tokens_details.reasoning_tokens,
-                (
-                    result.usage.prompt_tokens_details.cached_tokens
-                    if hasattr(result.usage, "prompt_tokens_details")
-                    else 0
-                ),
+                prompt_tokens,
+                completion_tokens,
+                reasoning_tokens,
+                cached_tokens,
             )
             # Add interaction details
             token_tracker.add_interaction(
                 model,
                 system_message,
                 prompt,
-                result.choices[
-                    0
-                ].message.content,  # Assumes response is in content field
+                result.choices[0].message.content if result.choices else "",
                 timestamp,
             )
         return result
@@ -195,26 +182,34 @@ def track_token_usage(func):
         logging.info("args: ", args)
         logging.info("kwargs: ", kwargs)
 
-        if hasattr(result, "usage") and result.usage.completion_tokens_details is not None:
+        if hasattr(result, "usage") and result.usage:
+            # Get token counts with safe defaults
+            prompt_tokens = result.usage.prompt_tokens if hasattr(result.usage, "prompt_tokens") else 0
+            completion_tokens = result.usage.completion_tokens if hasattr(result.usage, "completion_tokens") else 0
+
+            # Get reasoning tokens if available
+            reasoning_tokens = 0
+            if hasattr(result.usage, "completion_tokens_details") and result.usage.completion_tokens_details:
+                reasoning_tokens = result.usage.completion_tokens_details.reasoning_tokens
+
+            # Get cached tokens if available
+            cached_tokens = 0
+            if hasattr(result.usage, "prompt_tokens_details") and result.usage.prompt_tokens_details:
+                cached_tokens = result.usage.prompt_tokens_details.cached_tokens
+
             token_tracker.add_tokens(
                 model,
-                result.usage.prompt_tokens,
-                result.usage.completion_tokens,
-                result.usage.completion_tokens_details.reasoning_tokens,
-                (
-                    result.usage.prompt_tokens_details.cached_tokens
-                    if hasattr(result.usage, "prompt_tokens_details")
-                    else 0
-                ),
+                prompt_tokens,
+                completion_tokens,
+                reasoning_tokens,
+                cached_tokens,
             )
             # Add interaction details
             token_tracker.add_interaction(
                 model,
                 system_message,
                 prompt,
-                result.choices[
-                    0
-                ].message.content,  # Assumes response is in content field
+                result.choices[0].message.content if result.choices else "",
                 timestamp,
             )
         return result

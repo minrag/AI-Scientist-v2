@@ -7,7 +7,7 @@ import os
 import re
 import sys
 from datetime import datetime
-from ai_scientist.llm import create_client
+from ai_scientist.utils.model_config import create_client
 
 from contextlib import contextmanager
 from ai_scientist.treesearch.perform_experiments_bfts_with_agentmanager import (
@@ -85,20 +85,20 @@ def parse_arguments():
     parser.add_argument(
         "--model_agg_plots",
         type=str,
-        default="o3-mini-2025-01-31",
-        help="Model to use for plot aggregation",
+        default="plot_aggregation",
+        help="Model type to use for plot aggregation (references config.yaml)",
     )
     parser.add_argument(
         "--model_writeup",
         type=str,
-        default="o1-preview-2024-09-12",
-        help="Model to use for writeup",
+        default="writeup",
+        help="Model type to use for writeup (references config.yaml)",
     )
     parser.add_argument(
         "--model_citation",
         type=str,
-        default="gpt-4o-2024-11-20",
-        help="Model to use for citation gathering",
+        default="citation",
+        help="Model type to use for citation gathering (references config.yaml)",
     )
     parser.add_argument(
         "--num_cite_rounds",
@@ -109,14 +109,14 @@ def parse_arguments():
     parser.add_argument(
         "--model_writeup_small",
         type=str,
-        default="gpt-4o-2024-05-13",
-        help="Smaller model to use for writeup",
+        default="small_model",
+        help="Smaller model type to use for writeup (references config.yaml)",
     )
     parser.add_argument(
         "--model_review",
         type=str,
-        default="gpt-4o-2024-11-20",
-        help="Model to use for review main text and captions",
+        default="review",
+        help="Model type to use for review main text and captions (references config.yaml)",
     )
     parser.add_argument(
         "--skip_writeup",

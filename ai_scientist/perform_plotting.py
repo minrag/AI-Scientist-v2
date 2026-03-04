@@ -8,7 +8,8 @@ import sys
 import traceback
 from rich import print
 
-from ai_scientist.llm import create_client, get_response_from_llm
+from ai_scientist.utils.model_config import create_client
+from ai_scientist.llm import get_response_from_llm
 from ai_scientist.utils.token_tracker import token_tracker
 from ai_scientist.perform_icbinb_writeup import (
     load_idea_text,
@@ -134,7 +135,7 @@ def run_aggregator_script(
 
 
 def aggregate_plots(
-    base_folder: str, model: str = "o1-2024-12-17", n_reflections: int = 5
+    base_folder: str, model: str = "plot_aggregation", n_reflections: int = 5
 ) -> None:
     filename = "auto_plot_aggregator.py"
     aggregator_script_path = os.path.join(base_folder, filename)
@@ -265,8 +266,8 @@ def main():
     )
     parser.add_argument(
         "--model",
-        default="o1-2024-12-17",
-        help="LLM model to use (default: o1-2024-12-17).",
+        default="plot_aggregation",
+        help="Model type to use for plot aggregation (references config.yaml).",
     )
     parser.add_argument(
         "--reflections",

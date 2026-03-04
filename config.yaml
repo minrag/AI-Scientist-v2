@@ -1,0 +1,88 @@
+# LLM 配置文件
+# 所有模型配置必须在此文件中定义，不再支持环境变量回退
+
+# 配置说明:
+#   llm               - 大语言模型 (默认主模型)
+#   vlm               - 多模态 / 视觉语言模型
+#   code              - 代码生成模型
+#   plot_aggregation  - 用于图像聚合的模型
+#   writeup           - 用于论文写作的模型
+#   citation          - 用于引用收集的模型
+#   small_model       - 小型模型 (用于简单任务)
+#   review            - 用于评审的模型
+#
+# client_type 只能是以下之一:
+# - openai
+# - anthropic
+
+models:
+  ## 主语言模型
+  llm:
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxx"
+    model_name: deepseek-chat
+
+  ## 视觉模型
+  vlm:
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxx"
+    model_name: deepseek-chat
+
+  ## 代码生成模型
+  code:
+    client_type: anthropic
+    base_url: https://api.anthropic.com
+    api_key: ""
+    model_name: claude-sonnet-4-20250514
+
+  ## 图像聚合模型
+  plot_aggregation:
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxx"
+    model_name: deepseek-chat
+
+  ## 论文写作模型
+  writeup:
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxx"
+    model_name: deepseek-chat
+
+  ## 引用收集模型
+  citation:
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxx"
+    model_name: deepseek-chat
+
+  ## 小型模型 (用于简单任务)
+  small_model:
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxx"
+    model_name: deepseek-chat
+    
+  ## 评审模型
+  review:
+    client_type: openai
+    base_url: https://api.deepseek.com/v1
+    api_key: "sk-xxxx"
+    model_name: deepseek-chat
+
+
+# 学术搜索默认工具配置
+academic_search:
+  default_tool: "open_alex"
+
+# OpenAlex API 配置
+open_alex:
+  api_key: "xxxx"
+  email: ""
+  base_url: "https://api.openalex.org"
+
+# Semantic Scholar API 配置
+semantic_scholar:
+  api_key: ""

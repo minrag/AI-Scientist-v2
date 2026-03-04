@@ -29,7 +29,7 @@ This system autonomously generates hypotheses, runs experiments, analyzes data, 
 
 1.  [Requirements](#requirements)
     *   [Installation](#installation)
-    *   [Supported Models and API Keys](#supported-models-and-api-keys)
+    *   [Model Configuration](#model-configuration)
 2.  [Generate Research Ideas](#generate-research-ideas)
 3.  [Run AI Scientist-v2 Paper Generation Experiments](#run-ai-scientist-v2-paper-generation-experiments)
 4.  [Citing The AI Scientist-v2](#citing-the-ai-scientist-v2)
@@ -60,52 +60,69 @@ pip install -r requirements.txt
 
 Installation usually takes no more than one hour.
 
-### Supported Models and API Keys
+### Model Configuration
 
-#### OpenAI Models
+All model configurations are managed centrally in `config.yaml`. This includes API endpoints, API keys, and model names.
 
-By default, the system uses the `OPENAI_API_KEY` environment variable for OpenAI models.
+#### Configuring Models
 
-#### Gemini Models
+Edit `config.yaml` to configure your models. Each model type has the following fields:
 
-By default, the system uses the `GEMINI_API_KEY` environment variable for Gemini models through OpenAI API.
-
-#### Claude Models via AWS Bedrock
-
-To use Claude models provided by Amazon Bedrock, install the necessary additional packages:
-```bash
-pip install anthropic[bedrock]
+```yaml
+models:
+  llm:
+    client_type: openai          # or 'anthropic'
+    base_url: https://api.openai.com/v1
+    api_key: "your-api-key-here"
+    model_name: gpt-4o-2024-11-20
 ```
-Next, configure valid [AWS Credentials](https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html) and the target [AWS Region](https://docs.aws.amazon.com/bedrock/latest/userguide/bedrock-regions.html) by setting the following environment variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION_NAME`.
+
+Available model types:
+- `llm` - Main language model for general tasks
+- `vlm` - Vision-language model for image understanding
+- `code` - Model for code generation
+- `plot_aggregation` - Model for plot aggregation tasks
+- `writeup` - Model for paper writing
+- `citation` - Model for citation collection
+- `small_model` - Smaller/faster model for simple tasks
+- `review` - Model for reviewing tasks
+
+#### Supported Providers
+
+**OpenAI-compatible APIs**
+- Set `client_type: openai`
+- Configure `base_url` for any OpenAI-compatible endpoint (OpenAI, DeepSeek, vLLM, etc.)
+- Set `api_key` directly in config.yaml
+
+**Anthropic (Claude)**
+- Set `client_type: anthropic`
+- For standard Anthropic API: leave `base_url` empty or omit
+- For AWS Bedrock: configure `base_url` with your Bedrock endpoint
+- Set `api_key` directly in config.yaml
 
 #### Semantic Scholar API (Literature Search)
 
 Our code can optionally use a Semantic Scholar API Key (`S2_API_KEY`) for higher throughput during literature search [if you have one](https://www.semanticscholar.org/product/api). This is used during both the ideation and paper writing stages. The system should work without it, though you might encounter rate limits or reduced novelty checking during ideation. If you experience issues with Semantic Scholar, you can skip the citation phase during paper generation.
 
-#### Setting API Keys
+To configure the Semantic Scholar API key, set it in `config.yaml`:
 
-Ensure you provide the necessary API keys as environment variables for the models you intend to use. For example:
-```bash
-export OPENAI_API_KEY="YOUR_OPENAI_KEY_HERE"
-export S2_API_KEY="YOUR_S2_KEY_HERE"
-# Set AWS credentials if using Bedrock
-# export AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID"
-# export AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_KEY"
-# export AWS_REGION_NAME="your-aws-region"
+```yaml
+semantic_scholar:
+  api_key: "your-s2-key-here"
 ```
 
 ## Generate Research Ideas
 
 Before running the full AI Scientist-v2 experiment pipeline, you first use the `ai_scientist/perform_ideation_temp_free.py` script to generate potential research ideas. This script uses an LLM to brainstorm and refine ideas based on a high-level topic description you provide, interacting with tools like Semantic Scholar to check for novelty.
 
-1.  **Prepare a Topic Description:** Create a Markdown file (e.g., `my_research_topic.md`) describing the research area or theme you want the AI to explore. This file should contain sections like `Title`, `Keywords`, `TL;DR`, and `Abstract` to define the scope of the research. Refer to the example file `ai_scientist/ideas/i_cant_believe_its_not_better.md` for the expected structure and content format. Place your file in a location accessible by the script (e.g., the `ai_scientist/ideas/` directory).
+1.  **Prepare a Topic Description:** Create a Markdown file (e.g., `llm_inference_optimization.md`) describing the research area or theme you want the AI to explore. This file should contain sections like `Title`, `Keywords`, `TL;DR`, and `Abstract` to define the scope of the research. Refer to the example file `ai_scientist/ideas/i_cant_believe_its_not_better.md` for the expected structure and content format. Place your file in a location accessible by the script (e.g., the `ai_scientist/ideas/` directory).
 
 2.  **Run the Ideation Script:** Execute the script from the main project directory, pointing it to your topic description file and specifying the desired LLM.
 
     ```bash
     python ai_scientist/perform_ideation_temp_free.py \
-     --workshop-file "ai_scientist/ideas/my_research_topic.md" \
-     --model gpt-4o-2024-05-13 \
+     --workshop-file "ai_scientist/ideas/llm_inference_optimization.md" \
+     --model llm \
      --max-num-generations 20 \
      --num-reflections 5
     ```
@@ -114,7 +131,7 @@ Before running the full AI Scientist-v2 experiment pipeline, you first use the `
     *   `--max-num-generations`: How many distinct research ideas to attempt generating.
     *   `--num-reflections`: How many refinement steps the LLM should perform for each idea.
 
-3.  **Output:** The script will generate a JSON file named after your input Markdown file (e.g., `ai_scientist/ideas/my_research_topic.json`). This file will contain a list of structured research ideas, including hypotheses, proposed experiments, and related work analysis.
+3.  **Output:** The script will generate a JSON file named after your input Markdown file (e.g., `ai_scientist/ideas/llm_inference_optimization.json`). This file will contain a list of structured research ideas, including hypotheses, proposed experiments, and related work analysis.
 
 4.  **Proceed to Experiments:** Once you have the generated JSON file containing research ideas, you can proceed to the next section to run the experiments.
 
@@ -126,6 +143,7 @@ Using the JSON file generated in the previous ideation step, you can now launch 
 
 Specify the models used for the write-up and review phases via command-line arguments.
 The configuration for the best-first tree search (BFTS) is located in `bfts_config.yaml`. Adjust parameters in this file as needed.
+Model types specified via command-line arguments (e.g., `--model_writeup writeup`) reference the model type keys defined in `config.yaml`.
 
 Key tree search configuration parameters in `bfts_config.yaml`:
 
@@ -133,22 +151,25 @@ Key tree search configuration parameters in `bfts_config.yaml`:
     -   Set `num_workers` (number of parallel exploration paths) and `steps` (maximum number of nodes to explore). For example, if `num_workers=3` and `steps=21`, the tree search will explore up to 21 nodes, expanding 3 nodes concurrently at each step.
     -   `num_seeds`: Should generally be the same as `num_workers` if `num_workers` is less than 3. Otherwise, set `num_seeds` to 3.
     -   Note: Other agent parameters like `k_fold_validation`, `expose_prediction`, and `data_preview` are not used in the current version.
+    -   Model references (`code`, `feedback`, `vlm_feedback`) use model type keys from `config.yaml`.
 -   `search` config:
     -   `max_debug_depth`: The maximum number of times the agent will attempt to debug a failing node before abandoning that search path.
     -   `debug_prob`: The probability of attempting to debug a failing node.
     -   `num_drafts`: The number of initial root nodes (i.e., the number of independent trees to grow) during Stage 1.
 
-Example command to run AI-Scientist-v2 using a generated idea file (e.g., `my_research_topic.json`). Please review `bfts_config.yaml` for detailed tree search parameters (the default config includes `claude-3-5-sonnet` for experiments). Do not set `load_code` if you do not want to initialize experimentation with a code snippet.
+> **Note:** Before running experiments, ensure you have configured valid API keys in `config.yaml` for the model types you intend to use.
+
+Example command to run AI-Scientist-v2 using a generated idea file (e.g., `llm_inference_optimization.json`). Review `bfts_config.yaml` for detailed tree search parameters and ensure your API keys are configured in `config.yaml`. Do not set `load_code` if you do not want to initialize experimentation with a code snippet.
 
 ```bash
 python launch_scientist_bfts.py \
- --load_ideas "ai_scientist/ideas/my_research_topic.json" \
+ --load_ideas "ai_scientist/ideas/llm_inference_optimization.json" \
  --load_code \
  --add_dataset_ref \
- --model_writeup o1-preview-2024-09-12 \
- --model_citation gpt-4o-2024-11-20 \
- --model_review gpt-4o-2024-11-20 \
- --model_agg_plots o3-mini-2025-01-31 \
+ --model_writeup writeup \
+ --model_citation citation \
+ --model_review review \
+ --model_agg_plots plot_aggregation \
  --num_cite_rounds 20
 ```
 
@@ -177,7 +198,7 @@ The AI Scientist-v2 completes experiments with a success rate that depends on th
 
 **What is the estimated cost per experiment?**
 
-The ideation step cost depends on the LLM used and the number of generations/reflections, but is generally low (a few dollars). For the main experiment pipeline, using Claude 3.5 Sonnet for the experimentation phase typically costs around $15–$20 per run. The subsequent writing phase adds approximately $5 when using the default models specified in the example command. Using GPT-4o for `model_citation` is recommended as it can help reduce writing costs.
+The ideation step cost depends on the LLM used and the number of generations/reflections, but is generally low (a few dollars). For the main experiment pipeline, costs vary based on the model type configured in `config.yaml`. Using powerful models like Claude 3.5 Sonnet for the experimentation phase typically costs around $15–$20 per run. The subsequent writing phase adds approximately $5 when using the default models specified in the example command. Using GPT-4o for `model_citation` is recommended as it can help reduce writing costs.
 
 **How do I run The AI Scientist-v2 for different subject fields?**
 
@@ -189,7 +210,7 @@ The Semantic Scholar API is used to assess the novelty of generated ideas and to
 
 **I encountered a "CUDA Out of Memory" error. What can I do?**
 
-This error typically occurs when the AI Scientist-v2 attempts to load or run a model that requires more GPU memory than available on your system. To resolve this, you can try updating your ideation prompt file (`ai_scientist/ideas/my_research_topic.md`) to suggest using smaller models for the experiments.
+This error typically occurs when the AI Scientist-v2 attempts to load or run a model that requires more GPU memory than available on your system. To resolve this, you can try updating your ideation prompt file (`ai_scientist/ideas/llm_inference_optimization.md`) to suggest using smaller models for the experiments.
 
 ## Acknowledgement
 
@@ -199,4 +220,14 @@ The tree search component implemented within the `ai_scientist` directory is bui
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=SakanaAI/AI-Scientist-v2&type=Date)](https://star-history.com/#SakanaAI/AI-Scientist-v2&Date)
+
+## 提示词
+- 修改整个项目的模型调用,不要在硬编码模型名称,而是通过config.yaml中的配置的模型类型,写个函数统一读取config.yaml文件,获取模型的主要配置,包括api_key,base_url,model_name, 现有代码传递的model修改为model_type,方法内根据model_type获取api_key,base_url,model_name.模型的配置从配置文件读取,不要读取环境变量.
+- 去掉ollama支持,去掉max_tokens参数.
+- bfts_config.yaml中配置的模型名称,修改为config.yaml中的model_type值,并修改对应的代码.
+- 所有模型的调用都根据model_type读取config.yaml的api_key,base_url,model_name.
+- 不再计算模型的价格,只记录消耗的token.
+- 类似 if model_name.startswith("o1") or model_name.startswith("o3"): 这种模型判断都要去掉,不要硬编码处理特定模型
+- get_ai_client 要返回client和model_name,并修改用到的代码逻辑
+- 模型调用参数不要把model_type当成model使用.
 

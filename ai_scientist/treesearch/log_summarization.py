@@ -267,17 +267,17 @@ def annotate_history(journal, cfg=None):
             while retry_count < max_retries:
                 try:
                     if cfg.agent.get("summary", None) is not None:
-                        model = cfg.agent.summary.model
+                        model_type = cfg.agent.summary.model
                     else:
-                        model = "gpt-4o-2024-08-06"
-                    client = get_ai_client(model)
+                        model_type = "review"
+                    client, model_name = get_ai_client(model_type)
                     response = get_response_from_llm(
                         overall_plan_summarizer_prompt.format(
                             prev_overall_plan=node.parent.overall_plan,
                             current_plan=node.plan,
                         ),
                         client,
-                        model,
+                        model_name,
                         report_summarizer_sys_msg,
                     )
                     node.overall_plan = extract_json_between_markers(response[0])[
@@ -339,11 +339,11 @@ def overall_summarize(journals, cfg=None):
             return [get_node_log(n) for n in good_leaf_nodes]
         elif idx == 0:
             if cfg.agent.get("summary", None) is not None:
-                model = cfg.agent.summary.get("model", "")
+                model_type = cfg.agent.summary.get("model", "")
             else:
-                model = "gpt-4o-2024-08-06"
-            client = get_ai_client(model)
-            summary_json = get_stage_summary(journal, stage_name, model, client)
+                model_type = "review"
+            client, model_name = get_ai_client(model_type)
+            summary_json = get_stage_summary(journal, stage_name, model_name, client)
             return summary_json
 
     from tqdm import tqdm
