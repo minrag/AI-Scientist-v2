@@ -252,7 +252,7 @@ The tree search component implemented within the `ai_scientist` directory is bui
 
 [![Star History Chart](https://api.star-history.com/svg?repos=SakanaAI/AI-Scientist-v2&type=Date)](https://star-history.com/#SakanaAI/AI-Scientist-v2&Date)
 
-## 提示词
+## qwen3.5-plus 提示词
 - 修改整个项目的模型调用,不要在硬编码模型名称,而是通过config.yaml中的配置的模型类型,写个函数统一读取config.yaml文件,获取模型的主要配置,包括api_key,base_url,model_name, 现有代码传递的model修改为model_type,方法内根据model_type获取api_key,base_url,model_name.模型的配置从配置文件读取,不要读取环境变量.
 - 去掉ollama支持,去掉max_tokens参数.
 - bfts_config.yaml中配置的模型名称,修改为config.yaml中的model_type值,并修改对应的代码.
@@ -269,6 +269,10 @@ base_url = "https://api.openalex.org/works" 应该从config.yaml中读取,通过
 semantic_scholar 的 base_url 设置为完整的 https://api.semanticscholar.org/graph/v1/paper/search, 也要从配置文件读取,不要硬编码
 
 - open_alex 返回的数据格式要和semantic_scholar 保持一致
+
+- Stage 4 (消融实验): 可能有多个子阶段,因为 AI 可能根据实验进展决定追加更多消融分析,将多个completed正常完成的消融实验结果融合
+
+- 在 Journal 类中添加了 completed: bool = field(default=True) 属性，默认值为 True，表示阶段已完成。这样在生成最终报告时，所有阶段都会被正常处理。
 
 
 

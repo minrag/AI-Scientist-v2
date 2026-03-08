@@ -363,6 +363,7 @@ class Journal:
     """A collection of nodes representing the solution tree."""
 
     nodes: list[Node] = field(default_factory=list)
+    completed: bool = field(default=True)
 
     def __getitem__(self, idx: int) -> Node:
         return self.nodes[idx]

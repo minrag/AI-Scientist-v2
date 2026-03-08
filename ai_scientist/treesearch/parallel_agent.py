@@ -297,6 +297,26 @@ class MinimalAgent:
     @property
     def _prompt_impl_guideline(self):
         impl_guideline = [
+            "CRITICAL CODE QUALITY CHECKLIST - Before finalizing your code, VERIFY ALL of these:",
+            "  [ ] All tensor shapes are verified with print statements before loss computation",
+            "  [ ] All variable names are defined before use (no typos, no undefined variables)",
+            "  [ ] All dictionaries are accessed with .get() method or keys are verified first",
+            "  [ ] All CUDA tensors are moved to CPU before numpy/matplotlib operations",
+            "  [ ] All string formatting uses f-strings with correct variable types (not dicts)",
+            "  [ ] All loops that modify masks actually update the mask variable",
+            "  [ ] Code is complete (not truncated, all functions fully implemented)",
+            "  [ ] All function return values are unpacked with correct number of variables",
+            "  [ ] GRADIENT TRACKING: Never initialize tensors with torch.zeros() if you need gradients - use torch.zeros(..., requires_grad=True) or avoid intermediate tensors",
+            "  [ ] GRADIENT TRACKING: When using indexing assignment, ensure the target tensor is part of the computation graph",
+            "  [ ] GRADIENT TRACKING: Avoid reassigning tensors that need gradients - use inplace operations when possible",
+            "CRITICAL PREVENT COMMON BUGS - Your code MUST avoid these:",
+            "  - NEVER use torch.zeros() for final_logits in training - directly return the computed logits",
+            "  - NEVER download pretrained models - either use random initialization or check if model exists locally first",
+            "  - NEVER use hardcoded entropy thresholds - compute max_entropy = ln(num_classes) and use relative thresholds (e.g., 0.3 * max_entropy)",
+            "  - NEVER use the same variable for both indexing target and index mask - clone() the mask before using",
+            "  - NEVER use excessive debug printing inside training loops (print every N batches, not every batch)",
+            "  - NEVER allow negative skip rates - validate your skip rate calculation logic",
+            "  - ALWAYS validate tensor shapes match before loss: logits.view(-1, C) needs targets.view(-1) with same batch size",
             "CRITICAL GPU REQUIREMENTS - Your code MUST include ALL of these:",
             "  - At the start of your code, add these lines to handle GPU/CPU:",
             "    ```python",
@@ -326,6 +346,35 @@ class MinimalAgent:
                 )
         impl_guideline.extend(
             [
+                "CRITICAL TENSOR SHAPE DEBUGGING - Your code MUST include these debug statements:",
+                "  - Before ANY loss computation, add: print(f'DEBUG: logits shape={logits.shape}, targets shape={targets.shape}')",
+                "  - For classification with CrossEntropyLoss: targets must be shape [batch_size] (class indices), NOT [batch_size, num_classes]",
+                "  - If you see 'Expected target size [X, Y], got [Z]': your targets need reshaping",
+                "  - Use targets.view(-1) or targets.squeeze() to fix 1D vs 2D mismatches",
+                "  - For sequence models: logits=[batch*seq_len, vocab_size] requires targets=[batch*seq_len]",
+                "CRITICAL EARLY EXIT / DYNAMIC LAYER SKIPPING - If your code uses adaptive depth:",
+                "  - CRITICAL: For TRAINING, NEVER use torch.zeros() for final_logits - directly return computed logits without intermediate tensors",
+                "  - For INFERENCE only: Initialize final_logits with correct shape: final_logits = torch.zeros(batch_size, num_classes)",
+                "  - ALWAYS update active_mask inside layer loops: active_mask = active_mask & (~tokens_exiting)",
+                "  - Add debug: print(f'DEBUG: layer {i}, active={active_mask.sum()}, exited={(~active_mask).sum()}')",
+                "  - Never use stale masks - the mask MUST be updated after each layer processes tokens",
+                "  - For manual layer loops with early exit, ensure hidden state 'x' is reset correctly for remaining tokens",
+                "  - IMPORTANT: If return_all_logits=True returns (outputs, all_logits, exit_info), do NOT unpack as (outputs, exit_info)",
+                "  - CRITICAL: When using indexing to update final_logits, use .clone() for index tensors to avoid same-memory errors",
+                "  - CRITICAL: Entropy threshold should be relative to max_entropy: threshold = 0.3 * ln(num_classes), NOT hardcoded values like 1.5 or 2.5",
+                "CRITICAL CUDA TENSOR HANDLING - Your code MUST:",
+                "  - Convert tensors to CPU before numpy: tensor.cpu().numpy()",
+                "  - Convert tensors to CPU before matplotlib plotting",
+                "  - Use .item() to extract scalar values from single-element tensors",
+                "  - NEVER pass CUDA tensors to non-PyTorch libraries (sklearn, matplotlib, numpy)",
+                "  - When saving experiment data: {k: v.cpu().numpy() if isinstance(v, torch.Tensor) else v for k, v in data.items()}",
+                "CRITICAL VARIABLE NAMING AND DICTIONARY ACCESS - Your code MUST:",
+                "  - Define ALL variables before using them - no typos in variable names",
+                "  - Use consistent naming: if you define 'savings_ratio', do NOT access 'savings'",
+                "  - When unpacking function returns: count variables match return statement exactly",
+                "  - For dictionary access, use .get() with default: data.get('key', default_value)",
+                "  - Before accessing dict keys, print available keys: print(f'Available keys: {data.keys()}')",
+                "  - NEVER use dict directly in f-string: use str(data) or data.keys() instead",
                 "For generative modeling tasks, you must:",
                 "  - Generate a set of samples from your model",
                 "  - Compare these samples with ground truth data using appropriate visualizations",
@@ -492,6 +541,18 @@ class MinimalAgent:
         return Node(plan=plan, code=code)
 
     def _debug(self, parent_node: Node) -> Node:
+        # Analyze the error type to provide targeted bugfix guidance
+        error_type = parent_node.exc_type if parent_node.exc_type else ""
+        error_summary = ""
+        if "grad" in parent_node.term_out.lower() or "backward" in parent_node.term_out.lower():
+            error_summary = "CRITICAL: This is a gradient tracking error. Fix by avoiding torch.zeros() for tensors that need gradients, or ensure all operations are part of the computation graph."
+        elif "shape" in parent_node.term_out.lower() or "size" in parent_node.term_out.lower():
+            error_summary = "CRITICAL: This is a tensor shape mismatch error. Fix by ensuring logits and targets have compatible shapes for the loss function."
+        elif "early exit" in parent_node.term_out.lower() or "threshold" in parent_node.term_out.lower():
+            error_summary = "CRITICAL: This is an early exit logic error. Fix by using relative entropy thresholds (0.3 * ln(num_classes)) and proper mask updates."
+        elif "network" in parent_node.term_out.lower() or "download" in parent_node.term_out.lower():
+            error_summary = "CRITICAL: This is a network error. Fix by using random initialization instead of downloading pretrained models."
+        
         prompt: Any = {
             "Introduction": (
                 "You are an experienced AI researcher. Your previous code for research experiment had a bug, so based on the information below, you should revise it in order to fix this bug. "
@@ -503,6 +564,8 @@ class MinimalAgent:
             "Execution output": wrap_code(parent_node.term_out, lang=""),
             "Feedback based on generated plots": parent_node.vlm_feedback_summary,
             "Feedback about execution time": parent_node.exec_time_feedback,
+            "Error Type": error_type,
+            "Quick Fix Hint": error_summary,
             "Instructions": {},
         }
         prompt["Instructions"] |= self._prompt_debug_resp_fmt
@@ -510,6 +573,8 @@ class MinimalAgent:
             "Bugfix improvement sketch guideline": [
                 "You should write a brief natural language description (3-5 sentences) of how the issue in the previous implementation can be fixed.",
                 "Don't suggest to do EDA.",
+                "CRITICAL: Before writing code, mentally trace through the execution flow to ensure your fix addresses the root cause.",
+                "CRITICAL: After writing your fix, verify that all variable names are consistent and all tensors have correct shapes.",
             ],
         }
         prompt["Instructions"] |= self._prompt_impl_guideline
@@ -1568,6 +1633,14 @@ class ParallelAgent:
                             "4. Always print the name of the metric before printing the value by specifying the metric name clearly. Avoid vague terms like 'train,' 'val,' or 'test.' Instead, use precise labels such as 'train accuracy,' 'validation loss,' or 'test F1 score,' etc.",
                             "5. You only need to print the best or final value for each metric for each dataset",
                             "6. DO NOT CREATE ANY PLOTS",
+                            "CRITICAL CODE SAFETY REQUIREMENTS:",
+                            "  - NEVER use dict objects directly in f-strings or .format() - extract scalar values first",
+                            "  - ALWAYS verify variable names exist BEFORE using them (check spelling matches exactly)",
+                            "  - Use .get() method for dictionary access: data.get('key', default_value)",
+                            "  - Print available keys before accessing: print(f'Available keys: {list(data.keys())}')",
+                            "  - Handle nested dicts safely: data.get('level1', {}).get('level2', [])",
+                            "  - Convert tensors to CPU before any operations: tensor.cpu().numpy()",
+                            "  - NEVER access dict keys without checking existence first",
                             "Important code structure requirements:",
                             "  - Do NOT put any execution code inside 'if __name__ == \"__main__\":' block. Do not use 'if __name__ == \"__main__\":' at all.",
                             "  - All code should be at the global scope or in functions that are called from the global scope",
@@ -1577,8 +1650,32 @@ class ParallelAgent:
                             """
                             import matplotlib.pyplot as plt
                             import numpy as np
+                            import os
 
-                            experiment_data = np.load(os.path.join(os.getcwd(), 'experiment_data.npy'), allow_pickle=True).item()
+                            # Get working directory
+                            working_dir = os.path.join(os.getcwd(), 'working')
+
+                            # Load experiment data safely
+                            experiment_data_path = os.path.join(working_dir, 'experiment_data.npy')
+                            try:
+                                experiment_data = np.load(experiment_data_path, allow_pickle=True).item()
+                                print(f'Loaded experiment data. Available keys: {list(experiment_data.keys())}')
+                            except FileNotFoundError:
+                                print(f'Error: File not found at {experiment_data_path}')
+                                # List files in working_dir for debugging
+                                if os.path.exists(working_dir):
+                                    print(f'Files in working_dir: {os.listdir(working_dir)}')
+                                exit()
+
+                            # Access data safely with .get()
+                            for dataset_name, dataset_data in experiment_data.items():
+                                if isinstance(dataset_data, dict):
+                                    print(f'Dataset: {dataset_name}')
+                                    metrics = dataset_data.get('metrics', {})
+                                    losses = dataset_data.get('losses', {})
+                                    # Extract scalar values, not dicts
+                                    if metrics:
+                                        print(f'Metrics available: {list(metrics.keys())}')
                             """
                         ],
                         "Response format": worker_agent._prompt_metricparse_resp_fmt(),

@@ -387,7 +387,7 @@ This JSON will be automatically parsed, so ensure the format is precise."""
 
 
 # Using a template string to allow injection of the {page_limit} argument
-writeup_system_message_template = """You are an ambitious AI researcher who is looking to publish a paper that will contribute significantly to the field.
+writeup_system_message_template = r"""You are an ambitious AI researcher who is looking to publish a paper that will contribute significantly to the field.
 Ensure that the paper is scientifically accurate, objective, and truthful. Accurately report the experimental results, even if they are negative or inconclusive.
 You are planning to submit to a top-tier ML conference, which has guidelines:
 - The main paper is limited to {page_limit} pages, including all figures and tables, but excluding references, the impact statement, and optional appendices. In general, try to use the available space and include all relevant information.
@@ -448,6 +448,28 @@ Ensure you are always writing good compilable LaTeX code. Common mistakes that s
 - Unescaped special characters: & % $ # _ {{ }} ~ ^ \\
 - Proper table/figure closure.
 - Do not hallucinate new citations or any results not in the logs.
+
+CRITICAL LaTeX FORMATTING RULES:
+1. TABLE FORMAT: Use simple tabular environments. DO NOT use \usepackage{colortbl} features like \rowcolor, \columncolor, or \cellcolor. These cause compilation errors. Use only \toprule, \midrule, \bottomrule from booktabs.
+2. FIGURE FORMAT: Always close \begin{figure} with \end{figure}. When using subfigure, ensure each subfigure environment is properly nested:
+   \begin{figure}[t]
+   \centering
+   \begin{subfigure}{0.48\textwidth}
+   \includegraphics[width=\textwidth]{filename.png}
+   \caption{...}
+   \label{...}
+   \end{subfigure}
+   \hfill
+   \begin{subfigure}{0.48\textwidth}
+   ...
+   \end{subfigure}
+   \caption{Overall caption}
+   \label{...}
+   \end{figure}
+3. CITATION FORMAT: Always use \cite{key} or \cite{key1,key2} for citations. NEVER use [' or [None] or any bracket syntax without proper cite command. Citation keys must match the BibTeX entry keys in references.bib exactly.
+4. MATH ENVIRONMENTS: Every \begin{equation} must have \end{equation}. Every $ must have a closing $. Do not nest math environments.
+5. DO NOT use \begingroup or \endgroup manually - let LaTeX handle grouping automatically.
+6. Figure labels must be unique - never reuse \label{fig:...} or \label{tab:...}.
 
 When returning final code, place it in fenced triple backticks with 'latex' syntax highlighting.
 """

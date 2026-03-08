@@ -303,6 +303,9 @@ def overall_summarize(journals, cfg=None):
         stage_name, journal = stage_tuple
         annotate_history(journal, cfg=cfg)
         if idx in [1, 2]:
+            # For baseline and research stages, only process completed stages
+            if not journal.completed:
+                return {}  # Return empty dict for incomplete stages
             best_node = journal.get_best_node(cfg=cfg)
             # get multi-seed results and aggregater node
             child_nodes = best_node.children
@@ -332,12 +335,19 @@ def overall_summarize(journals, cfg=None):
                         agg_node
                     ),
                 }
-        elif idx == 3:
+        elif idx == 3 or (idx > 3 and stage_name.startswith("stage_4_ablation_studies")):
+            # Handle all stage_4_ablation_studies_* sub-stages (including _2_Component, etc.)
+            # Only process completed stages - skip stages that ended due to max iterations
+            if not journal.completed:
+                return []  # Return empty list for incomplete stages
             good_leaf_nodes = [
                 n for n in journal.good_nodes if n.is_leaf and n.ablation_name
             ]
             return [get_node_log(n) for n in good_leaf_nodes]
         elif idx == 0:
+            # For draft summary, only process completed stages
+            if not journal.completed:
+                return {}  # Return empty dict for incomplete stages
             if cfg.agent.get("summary", None) is not None:
                 model_type = cfg.agent.summary.get("model", "")
             else:
@@ -348,15 +358,35 @@ def overall_summarize(journals, cfg=None):
 
     from tqdm import tqdm
 
+    journals_list = list(journals)
     with ThreadPoolExecutor() as executor:
         results = list(
             tqdm(
-                executor.map(process_stage, range(len(list(journals))), journals),
+                executor.map(process_stage, range(len(journals_list)), journals_list),
                 desc="Processing stages",
-                total=len(list(journals)),
+                total=len(journals_list),
             )
         )
-        draft_summary, baseline_summary, research_summary, ablation_summary = results
+
+    # Map results by stage index to handle variable number of stages
+    results_dict = {}
+    for idx, result in enumerate(results):
+        results_dict[idx] = result
+
+    # Extract summaries by stage index (stage 0=draft, 1=baseline, 2=research)
+    draft_summary = results_dict.get(0)
+    baseline_summary = results_dict.get(1)
+    research_summary = results_dict.get(2)
+
+    # Merge all ablation stage results (stage 4 and any sub-stages like _2_Component, etc.)
+    ablation_results = []
+    for idx, result in results_dict.items():
+        if idx >= 3 and result:  # Skip None and empty lists
+            if isinstance(result, list):
+                ablation_results.extend(result)
+            else:
+                ablation_results.append(result)
+    ablation_summary = ablation_results if ablation_results else None
 
     return draft_summary, baseline_summary, research_summary, ablation_summary
 

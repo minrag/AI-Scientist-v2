@@ -574,7 +574,7 @@ This JSON will be automatically parsed, so ensure the format is precise."""
     return references_prompt, False
 
 
-writeup_system_message_template = """You are an ambitious AI researcher who is looking to publish a paper to the "I Can't Believe It's Not Better" (ICBINB) Workshop at ICLR 2025.
+writeup_system_message_template = r"""You are an ambitious AI researcher who is looking to publish a paper to the "I Can't Believe It's Not Better" (ICBINB) Workshop at ICLR 2025.
 This workshop aims to highlight real-world pitfalls, challenges, and negative or inconclusive results in deep learning, encouraging open discussion.
 You must accurately represent the results of the experiments.
 The main paper is limited to {page_limit} pages in single-column format, not counting references. In general, try to use the available space and include all relevant information.
@@ -635,10 +635,33 @@ Ensure you are always writing good compilable LaTeX code. Common mistakes that s
 - Proper table/figure closure.
 - Do not hallucinate new citations or any results not in the logs.
 
+CRITICAL LaTeX FORMATTING RULES:
+1. TABLE FORMAT: Use simple tabular environments. DO NOT use \usepackage{{colortbl}} features like \rowcolor, \columncolor, or \cellcolor. These cause compilation errors. Use only \toprule, \midrule, \bottomrule from booktabs.
+2. FIGURE FORMAT: Always close \begin{{figure}} with \end{{figure}}. When using subfigure, ensure each subfigure environment is properly nested:
+   \begin{{figure}}[t]
+   \centering
+   \begin{{subfigure}}{{0.48\textwidth}}
+   \includegraphics[width=\textwidth]{{filename.png}}
+   \caption{{...}}
+   \label{{...}}
+   \end{{subfigure}}
+   \hfill
+   \begin{{subfigure}}{{0.48\textwidth}}
+   ...
+   \end{{subfigure}}
+   \caption{{Overall caption}}
+   \label{{...}}
+   \end{{figure}}
+3. CITATION FORMAT: Always use \cite{{key}} or \cite{{key1,key2}} or \cite{{key1}} for citations. NEVER use [' or [None] or any bracket syntax without proper cite command. Citation keys must match the BibTeX entry keys in references.bib exactly.
+4. MATH ENVIRONMENTS: Every \begin{{equation}} must have \end{{equation}}. Every $ must have a closing $. Do not nest math environments.
+5. DO NOT use \begingroup or \endgroup manually - let LaTeX handle grouping automatically.
+6. Figure labels must be unique - never reuse \label{{fig:...}} or \label{{tab:...}}.
+
 Ensure proper citation usage:
-- Always include references within \begin{{filecontents}}{{references.bib}} ... \end{{filecontents}}, even if they haven't changed from the previous round.
+- Always include references within \begin{{filecontents}}{{references.bib}} ... \\end{{filecontents}}, even if they haven't changed from the previous round.
 - Use citations from the provided references.bib content.
 - Each section (especially Related Work) should have multiple citations.
+- Citation format: \cite{{author_year}} - use the actual BibTeX key, NOT ['key'] or [key].
 
 When returning final code, place it in fenced triple backticks with 'latex' syntax highlighting.
 """
@@ -765,6 +788,9 @@ def filter_experiment_summaries(exp_summaries, step_name):
     filtered_summaries = {}
     for stage_name in exp_summaries.keys():
         if stage_name in {"BASELINE_SUMMARY", "RESEARCH_SUMMARY"}:
+            # Skip if summary is None or empty
+            if not exp_summaries[stage_name]:
+                continue
             filtered_summaries[stage_name] = {}
             for key in exp_summaries[stage_name].keys():
                 if key in {"best node"}:
@@ -775,6 +801,9 @@ def filter_experiment_summaries(exp_summaries, step_name):
                                 exp_summaries[stage_name][key][node_key]
                             )
         elif stage_name == "ABLATION_SUMMARY" and step_name == "plot_aggregation":
+            # Skip if summary is None or empty
+            if not exp_summaries[stage_name]:
+                continue
             filtered_summaries[stage_name] = {}
             for ablation_summary in exp_summaries[stage_name]:
                 filtered_summaries[stage_name][ablation_summary["ablation_name"]] = {}
@@ -1123,7 +1152,7 @@ Return the entire file in full, with no unfilled placeholders!
 This must be an acceptable complete LaTeX writeup.
 Do not hallucinate any details!
 Ensure proper citation usage:
-- Always include references within \begin{{filecontents}}{{references.bib}} ... \end{{filecontents}}, even if they haven't changed from the previous round.
+- Always include references within \begin{{filecontents}}{{references.bib}} ... \\end{{filecontents}}, even if they haven't changed from the previous round.
 - Use citations from the provided references.bib content.
 """
 

@@ -161,7 +161,10 @@ def find_pdf_path_for_review(idea_dir):
             else:
                 # Fall back to the first reflection PDF if no numbers found
                 pdf_path = osp.join(idea_dir, reflection_pdfs[0])
-    return pdf_path
+        return pdf_path
+    else:
+        # No reflection PDFs found, return None
+        return None
 
 
 @contextmanager
@@ -304,6 +307,11 @@ if __name__ == "__main__":
     if not args.skip_review and not args.skip_writeup:
         # Perform paper review if the paper exists
         pdf_path = find_pdf_path_for_review(idea_dir)
+        if pdf_path is None:
+            raise RuntimeError(
+                "Writeup completed but no PDF file was found in the output directory. "
+                "Cannot perform review without a generated paper."
+            )
         if os.path.exists(pdf_path):
             print("Paper found at: ", pdf_path)
             paper_content = load_paper(pdf_path)

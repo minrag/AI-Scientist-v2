@@ -4,8 +4,10 @@ backoff
 openai
 # Viz
 matplotlib
+psutil
 pypdf
 pymupdf4llm
+pymupdf
 seaborn
 # Common Requirements
 numpy
@@ -15,6 +17,7 @@ tiktoken
 wandb
 tqdm
 rich
+requests
 humanize
 dataclasses-json
 funcy
@@ -24,6 +27,7 @@ scikit-learn
 shutup
 # pyalex
 python-igraph
+Pillow
 coolname
 jsonschema
 omegaconf
