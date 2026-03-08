@@ -81,8 +81,9 @@ academic_search:
 open_alex:
   api_key: "xxxx"
   email: ""
-  base_url: "https://api.openalex.org"
+  base_url: "https://api.openalex.org/works"
 
 # Semantic Scholar API 配置
 semantic_scholar:
   api_key: ""
+  base_url: "https://api.semanticscholar.org/graph/v1/paper/search"

@@ -100,16 +100,43 @@ Available model types:
 - For AWS Bedrock: configure `base_url` with your Bedrock endpoint
 - Set `api_key` directly in config.yaml
 
-#### Semantic Scholar API (Literature Search)
+#### Literature Search APIs
 
-Our code can optionally use a Semantic Scholar API Key (`S2_API_KEY`) for higher throughput during literature search [if you have one](https://www.semanticscholar.org/product/api). This is used during both the ideation and paper writing stages. The system should work without it, though you might encounter rate limits or reduced novelty checking during ideation. If you experience issues with Semantic Scholar, you can skip the citation phase during paper generation.
+The system uses **OpenAlex** by default for literature search during ideation and paper writing stages, with Semantic Scholar as a fallback. You can configure which service to use as the primary search tool.
 
-To configure the Semantic Scholar API key, set it in `config.yaml`:
+**Configuring the Default Search Tool**
+
+Set `academic_search.default_tool` in `config.yaml` to choose which service to use first:
+
+```yaml
+academic_search:
+  default_tool: "open_alex"  # Options: "open_alex" or "semantic_scholar"
+```
+
+The system will use the configured default tool first, and automatically fall back to the other service if it fails.
+
+**OpenAlex Configuration**
+
+[OpenAlex](https://openalex.org/) is an open online bibliographic database.
+
+```yaml
+open_alex:
+  api_key: "your-openalex-key-here"  # Optional but recommended for higher rate limits
+  email: "your-email@example.com"     # Optional but recommended for rate limiting
+  base_url: "https://api.openalex.org"  # API endpoint URL
+```
+
+**Semantic Scholar Configuration**
+
+[Semantic Scholar](https://www.semanticscholar.org/product/api) is used as a fallback if OpenAlex search fails or returns no results.
 
 ```yaml
 semantic_scholar:
   api_key: "your-s2-key-here"
+  base_url: "https://api.semanticscholar.org/graph/v1/paper/search"  # API endpoint URL
 ```
+
+> **Note:** If you don't have API keys, the system will still work but may be subject to stricter rate limits. You can also skip the citation phase during paper generation if you experience issues with the APIs.
 
 ## Generate Research Ideas
 
@@ -164,7 +191,7 @@ Example command to run AI-Scientist-v2 using a generated idea file (e.g., `llm_i
 ```bash
 python launch_scientist_bfts.py \
  --load_ideas "ai_scientist/ideas/llm_inference_optimization.json" \
- --load_code \
+ # --load_code \ ## 没有模板代码
  --add_dataset_ref \
  --model_writeup writeup \
  --model_citation citation \
@@ -204,9 +231,13 @@ The ideation step cost depends on the LLM used and the number of generations/ref
 
 First, perform the [Generate Research Ideas](#generate-research-ideas) step. Create a new Markdown file describing your desired subject field or topic, following the structure of the example `ai_scientist/ideas/i_cant_believe_its_not_better.md`. Run the `perform_ideation_temp_free.py` script with this file to generate a corresponding JSON idea file. Then, proceed to the [Run AI Scientist-v2 Paper Generation Experiments](#run-ai-scientist-v2-paper-generation-experiments) step, using this JSON file with the `launch_scientist_bfts.py` script via the `--load_ideas` argument.
 
-**What should I do if I have problems accessing the Semantic Scholar API?**
+**What should I do if I have problems accessing the literature search APIs?**
 
-The Semantic Scholar API is used to assess the novelty of generated ideas and to gather citations during the paper write-up phase. If you don't have an API key, encounter rate limits, you may be able to skip these phases.
+The system uses **OpenAlex** by default for literature search during ideation and paper writing, with **Semantic Scholar** as a fallback. These APIs are used to assess the novelty of generated ideas and to gather citations during the paper write-up phase.
+
+- If you don't have API keys, the system will still work but may be subject to stricter rate limits
+- If one API fails or returns no results, the system automatically tries the other
+- You can skip the citation phase during paper generation if you experience persistent issues with both APIs
 
 **I encountered a "CUDA Out of Memory" error. What can I do?**
 
@@ -230,4 +261,17 @@ The tree search component implemented within the `ai_scientist` directory is bui
 - 类似 if model_name.startswith("o1") or model_name.startswith("o3"): 这种模型判断都要去掉,不要硬编码处理特定模型
 - get_ai_client 要返回client和model_name,并修改用到的代码逻辑
 - 模型调用参数不要把model_type当成model使用.
+- 检索论文时 增加 open_alex 论文库,使用 pyalex 库进行检索,最后的格式和内容要和现在使用的semantic_scholar保持一致,就是等于多了一种论文检索方式,其他逻辑保持不变,默认使用 open_alex 进行论文检索,open_alex的配置在config.yaml
+
+base_url = "https://api.openalex.org/works" 应该从config.yaml中读取,通过 academic_search:
+  default_tool: "open_alex"  设置使用哪个工具检索,默认使用 open_alex进行检索
+
+semantic_scholar 的 base_url 设置为完整的 https://api.semanticscholar.org/graph/v1/paper/search, 也要从配置文件读取,不要硬编码
+
+- open_alex 返回的数据格式要和semantic_scholar 保持一致
+
+
+
+
+
 

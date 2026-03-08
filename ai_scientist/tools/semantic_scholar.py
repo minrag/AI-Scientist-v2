@@ -32,6 +32,20 @@ def get_semantic_scholar_api_key() -> Optional[str]:
         return _semantic_scholar_api_key_cache
 
 
+def get_semantic_scholar_base_url() -> str:
+    """Get Semantic Scholar API base URL from config.yaml."""
+    try:
+        from ai_scientist.utils.model_config import load_config
+        config = load_config()
+        # Use the base_url directly from config.yaml without modification
+        return config.get("semantic_scholar", {}).get(
+            "base_url",
+            "https://api.semanticscholar.org/graph/v1/paper/search"
+        )
+    except Exception:
+        return "https://api.semanticscholar.org/graph/v1/paper/search"
+
+
 def on_backoff(details: Dict) -> None:
     print(
         f"Backing off {details['wait']:0.1f} seconds after {details['tries']} tries "
@@ -80,13 +94,16 @@ class SemanticScholarSearchTool(BaseTool):
     def search_for_papers(self, query: str) -> Optional[List[Dict]]:
         if not query:
             return None
-        
+
+        # Get base URL from config
+        base_url = get_semantic_scholar_base_url()
+
         headers = {}
         if self.S2_API_KEY:
             headers["X-API-KEY"] = self.S2_API_KEY
-        
+
         rsp = requests.get(
-            "https://api.semanticscholar.org/graph/v1/paper/search",
+            base_url,
             headers=headers,
             params={
                 "query": query,
@@ -126,6 +143,7 @@ Abstract: {paper.get("abstract", "No abstract available.")}"""
 )
 def search_for_papers(query, result_limit=10) -> Union[None, List[Dict]]:
     S2_API_KEY = get_semantic_scholar_api_key()
+    base_url = get_semantic_scholar_base_url()
     headers = {}
     if not S2_API_KEY:
         warnings.warn(
@@ -133,12 +151,12 @@ def search_for_papers(query, result_limit=10) -> Union[None, List[Dict]]:
         )
     else:
         headers["X-API-KEY"] = S2_API_KEY
-    
+
     if not query:
         return None
-    
+
     rsp = requests.get(
-        "https://api.semanticscholar.org/graph/v1/paper/search",
+        base_url,
         headers=headers,
         params={
             "query": query,

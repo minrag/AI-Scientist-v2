@@ -14,17 +14,17 @@ from ai_scientist.llm import (
 from ai_scientist.utils.model_config import create_client
 
 from ai_scientist.tools.semantic_scholar import SemanticScholarSearchTool
+from ai_scientist.tools.open_alex import OpenAlexSearchTool, get_default_search_tool_name
 from ai_scientist.tools.base_tool import BaseTool
 
 # Create tool instances
+open_alex_tool = OpenAlexSearchTool()
 semantic_scholar_tool = SemanticScholarSearchTool()
 
-# Define tools at the top of the file
-tools = [
-    semantic_scholar_tool,
-    {
-        "name": "FinalizeIdea",
-        "description": """Finalize your idea by providing the idea details.
+# Static tool definition for FinalizeIdea
+_finalize_idea_tool = {
+    "name": "FinalizeIdea",
+    "description": """Finalize your idea by providing the idea details.
 
 The IDEA JSON should include the following fields:
 - "Name": A short descriptor of the idea. Lowercase, no spaces, underscores allowed.
@@ -34,8 +34,25 @@ The IDEA JSON should include the following fields:
 - "Abstract": An abstract that summarizes the proposal in conference format (approximately 250 words).
 - "Experiments": A list of experiments that would be conducted to validate the proposal. Ensure these are simple and feasible. Be specific in exactly how you would test the hypothesis, and detail precise algorithmic changes. Include the evaluation metrics you would use.
 - "Risk Factors and Limitations": A list of potential risks and limitations of the proposal.""",
-    },
-]
+}
+
+# Determine the default search tool based on config.yaml
+# academic_search.default_tool should be "open_alex" or "semantic_scholar"
+_default_tool_name = get_default_search_tool_name()
+
+# Define tools at the top of the file - default tool comes first
+if _default_tool_name == "SearchOpenAlex":
+    tools = [
+        open_alex_tool,  # Default paper search tool (from config)
+        semantic_scholar_tool,  # Fallback paper search tool
+        _finalize_idea_tool,
+    ]
+else:
+    tools = [
+        semantic_scholar_tool,  # Default paper search tool (from config)
+        open_alex_tool,  # Fallback paper search tool
+        _finalize_idea_tool,
+    ]
 
 # Create a tools dictionary for easy lookup
 tools_dict = {tool.name: tool for tool in tools if isinstance(tool, BaseTool)}
@@ -57,6 +74,9 @@ tool_names = [
 ]
 tool_names_str = ", ".join(tool_names)
 
+# Get the default search tool name for the prompt
+_default_search_tool = get_default_search_tool_name()
+
 system_prompt = f"""You are an experienced AI researcher who aims to propose high-impact research ideas resembling exciting grant proposals. Feel free to propose any novel ideas or experiments; make sure they are novel. Be very creative and think out of the box. Each proposal should stem from a simple and elegant question, observation, or hypothesis about the topic. For example, they could involve very interesting and simple interventions or investigations that explore new possibilities or challenge existing assumptions. Clearly clarify how the proposal distinguishes from the existing literature.
 
 Ensure that the proposal does not require resources beyond what an academic lab could afford. These proposals should lead to papers that are publishable at top ML conferences.
@@ -65,13 +85,15 @@ You have access to the following tools:
 
 {tool_descriptions}
 
+For literature search, use {_default_search_tool} as your primary search tool. Only use the alternative search tool if the primary one fails.
+
 Respond in the following format:
 
 ACTION:
 <The action to take, exactly one of {tool_names_str}>
 
 ARGUMENTS:
-<If ACTION is "SearchSemanticScholar", provide the search query as {{"query": "your search query"}}. If ACTION is "FinalizeIdea", provide the idea details as {{"idea": {{ ... }}}} with the IDEA JSON specified below.>
+<If ACTION is "SearchOpenAlex" or "SearchSemanticScholar", provide the search query as {{"query": "your search query"}}. If ACTION is "FinalizeIdea", provide the idea details as {{"idea": {{ ... }}}} with the IDEA JSON specified below.>
 
 If you choose to finalize your idea, provide the IDEA JSON in the arguments:
 
@@ -90,7 +112,11 @@ IDEA JSON:
 }}
 ```
 
-Ensure the JSON is properly formatted for automatic parsing.
+CRITICAL: Ensure the JSON is properly formatted for automatic parsing.
+- Escape all double quotes inside string values as \\"
+- Do not include unescaped newlines in string values - use \\n instead
+- Ensure all strings are properly quoted
+- Test that the JSON would parse correctly before sending
 
 Note: You should perform at least one literature search before finalizing your idea to ensure it is well-informed by existing research."""
 

@@ -22,7 +22,7 @@ black
 genson
 scikit-learn
 shutup
-pyalex
+# pyalex
 python-igraph
 coolname
 jsonschema

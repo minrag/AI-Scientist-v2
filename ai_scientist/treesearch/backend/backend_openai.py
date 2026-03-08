@@ -75,6 +75,8 @@ def query(
         filtered_kwargs["tools"] = [func_spec.as_openai_tool_dict]
         # force the model to use the function
         filtered_kwargs["tool_choice"] = func_spec.openai_tool_choice_dict
+        ## tinging 模式不支持 tool_choice
+        filtered_kwargs["extra_body"] =  {"enable_thinking": False}
 
     t0 = time.time()
     completion = backoff_create(

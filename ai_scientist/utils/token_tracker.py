@@ -149,7 +149,7 @@ def track_token_usage(func):
             # Get cached tokens if available
             cached_tokens = 0
             if hasattr(result.usage, "prompt_tokens_details") and result.usage.prompt_tokens_details:
-                cached_tokens = result.usage.prompt_tokens_details.cached_tokens
+                cached_tokens = result.usage.prompt_tokens_details.cached_tokens or 0
 
             token_tracker.add_tokens(
                 model,
@@ -195,7 +195,7 @@ def track_token_usage(func):
             # Get cached tokens if available
             cached_tokens = 0
             if hasattr(result.usage, "prompt_tokens_details") and result.usage.prompt_tokens_details:
-                cached_tokens = result.usage.prompt_tokens_details.cached_tokens
+                cached_tokens = result.usage.prompt_tokens_details.cached_tokens or 0
 
             token_tracker.add_tokens(
                 model,

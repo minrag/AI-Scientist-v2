@@ -15,7 +15,52 @@ from ai_scientist.llm import (
 )
 from ai_scientist.utils.model_config import create_client
 
-from ai_scientist.tools.semantic_scholar import search_for_papers
+from ai_scientist.tools.open_alex import search_for_papers as open_alex_search
+from ai_scientist.tools.semantic_scholar import search_for_papers as semantic_scholar_search
+from ai_scientist.tools.open_alex import get_default_search_tool_name
+
+# Determine default search tool from config.yaml
+_default_tool_name = get_default_search_tool_name()
+
+def search_for_papers(query, result_limit=10):
+    """Search for papers using configured default tool, with fallback.
+
+    Uses the tool specified in config.yaml academic_search.default_tool.
+    If the default tool fails, falls back to the other tool.
+    """
+    # Use configured default tool first
+    if _default_tool_name == "SearchOpenAlex":
+        # Try OpenAlex first
+        try:
+            papers = open_alex_search(query, result_limit)
+            if papers:
+                return papers
+        except Exception as e:
+            print(f"OpenAlex search failed: {e}, trying Semantic Scholar...")
+
+        # Fallback to Semantic Scholar
+        try:
+            papers = semantic_scholar_search(query, result_limit)
+            return papers
+        except Exception as e:
+            print(f"Semantic Scholar search failed: {e}")
+            return None
+    else:
+        # Try Semantic Scholar first
+        try:
+            papers = semantic_scholar_search(query, result_limit)
+            if papers:
+                return papers
+        except Exception as e:
+            print(f"Semantic Scholar search failed: {e}, trying OpenAlex...")
+
+        # Fallback to OpenAlex
+        try:
+            papers = open_alex_search(query, result_limit)
+            return papers
+        except Exception as e:
+            print(f"OpenAlex search failed: {e}")
+            return None
 
 from ai_scientist.perform_vlm_review import generate_vlm_img_review
 from ai_scientist.vlm import create_client as create_vlm_client
