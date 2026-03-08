@@ -23,6 +23,9 @@ from pathlib import Path
 import base64
 import sys
 
+# Import prompt manager
+from ai_scientist.utils.prompt_manager import get_prompt
+
 logger = logging.getLogger("ai-scientist")
 
 ExecCallbackType = Callable[[str, bool], ExecutionResult]
@@ -1617,69 +1620,8 @@ class ParallelAgent:
                     child_node.parse_metrics_plan = parse_metrics_plan
                 else:
                     # Call LLM to parse data files and extract metrics
-                    parse_metrics_prompt = {
-                        "Introduction": (
-                            "You are an AI researcher analyzing experimental results stored in numpy files. "
-                            "Write code to load and analyze the metrics from experiment_data.npy."
-                        ),
-                        "Context": [
-                            "Original Code: " + child_node.code,
-                        ],
-                        "Instructions": [
-                            "0. Make sure to get the working directory from os.path.join(os.getcwd(), 'working')",
-                            "1. Load the experiment_data.npy file, which is located in the working directory",
-                            "2. Extract metrics for each dataset. Make sure to refer to the original code to understand the structure of the data.",
-                            "3. Always print the name of the dataset before printing the metrics",
-                            "4. Always print the name of the metric before printing the value by specifying the metric name clearly. Avoid vague terms like 'train,' 'val,' or 'test.' Instead, use precise labels such as 'train accuracy,' 'validation loss,' or 'test F1 score,' etc.",
-                            "5. You only need to print the best or final value for each metric for each dataset",
-                            "6. DO NOT CREATE ANY PLOTS",
-                            "CRITICAL CODE SAFETY REQUIREMENTS:",
-                            "  - NEVER use dict objects directly in f-strings or .format() - extract scalar values first",
-                            "  - ALWAYS verify variable names exist BEFORE using them (check spelling matches exactly)",
-                            "  - Use .get() method for dictionary access: data.get('key', default_value)",
-                            "  - Print available keys before accessing: print(f'Available keys: {list(data.keys())}')",
-                            "  - Handle nested dicts safely: data.get('level1', {}).get('level2', [])",
-                            "  - Convert tensors to CPU before any operations: tensor.cpu().numpy()",
-                            "  - NEVER access dict keys without checking existence first",
-                            "Important code structure requirements:",
-                            "  - Do NOT put any execution code inside 'if __name__ == \"__main__\":' block. Do not use 'if __name__ == \"__main__\":' at all.",
-                            "  - All code should be at the global scope or in functions that are called from the global scope",
-                            "  - The script should execute immediately when run, without requiring any special entry point",
-                        ],
-                        "Example data loading code": [
-                            """
-                            import matplotlib.pyplot as plt
-                            import numpy as np
-                            import os
-
-                            # Get working directory
-                            working_dir = os.path.join(os.getcwd(), 'working')
-
-                            # Load experiment data safely
-                            experiment_data_path = os.path.join(working_dir, 'experiment_data.npy')
-                            try:
-                                experiment_data = np.load(experiment_data_path, allow_pickle=True).item()
-                                print(f'Loaded experiment data. Available keys: {list(experiment_data.keys())}')
-                            except FileNotFoundError:
-                                print(f'Error: File not found at {experiment_data_path}')
-                                # List files in working_dir for debugging
-                                if os.path.exists(working_dir):
-                                    print(f'Files in working_dir: {os.listdir(working_dir)}')
-                                exit()
-
-                            # Access data safely with .get()
-                            for dataset_name, dataset_data in experiment_data.items():
-                                if isinstance(dataset_data, dict):
-                                    print(f'Dataset: {dataset_name}')
-                                    metrics = dataset_data.get('metrics', {})
-                                    losses = dataset_data.get('losses', {})
-                                    # Extract scalar values, not dicts
-                                    if metrics:
-                                        print(f'Metrics available: {list(metrics.keys())}')
-                            """
-                        ],
-                        "Response format": worker_agent._prompt_metricparse_resp_fmt(),
-                    }
+                    # Get metrics parsing prompt from prompt.yaml with original_code as format parameter
+                    parse_metrics_prompt = get_prompt('metrics_parsing_prompt', original_code=child_node.code)
 
                     (
                         parse_metrics_plan,

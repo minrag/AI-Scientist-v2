@@ -12,6 +12,7 @@ from ai_scientist.llm import (
     get_response_from_llm,
 )
 from ai_scientist.utils.model_config import create_client
+from ai_scientist.utils.prompt_manager import get_prompt
 
 from ai_scientist.tools.semantic_scholar import SemanticScholarSearchTool
 from ai_scientist.tools.open_alex import OpenAlexSearchTool, get_default_search_tool_name
@@ -77,77 +78,34 @@ tool_names_str = ", ".join(tool_names)
 # Get the default search tool name for the prompt
 _default_search_tool = get_default_search_tool_name()
 
-system_prompt = f"""You are an experienced AI researcher who aims to propose high-impact research ideas resembling exciting grant proposals. Feel free to propose any novel ideas or experiments; make sure they are novel. Be very creative and think out of the box. Each proposal should stem from a simple and elegant question, observation, or hypothesis about the topic. For example, they could involve very interesting and simple interventions or investigations that explore new possibilities or challenge existing assumptions. Clearly clarify how the proposal distinguishes from the existing literature.
 
-Ensure that the proposal does not require resources beyond what an academic lab could afford. These proposals should lead to papers that are publishable at top ML conferences.
+def get_ideation_system_prompt(tool_descriptions: str, tool_names_str: str, default_search_tool: str) -> str:
+    """
+    获取创意生成阶段的系统提示词
 
-You have access to the following tools:
+    Args:
+        tool_descriptions: 工具描述字符串
+        tool_names_str: 工具名称列表字符串
+        default_search_tool: 默认搜索工具名称
 
-{tool_descriptions}
+    Returns:
+        格式化后的系统提示词
+    """
+    return get_prompt(
+        'ideation.system_prompt',
+        tool_descriptions=tool_descriptions,
+        tool_names_str=tool_names_str,
+        _default_search_tool=default_search_tool
+    )
 
-For literature search, use {_default_search_tool} as your primary search tool. Only use the alternative search tool if the primary one fails.
 
-Respond in the following format:
+system_prompt = get_ideation_system_prompt(tool_descriptions, tool_names_str, _default_search_tool)
 
-ACTION:
-<The action to take, exactly one of {tool_names_str}>
+# 定义初始创意生成提示词（从 prompt.yaml 读取）
+idea_generation_prompt = get_prompt('ideation.idea_generation')
 
-ARGUMENTS:
-<If ACTION is "SearchOpenAlex" or "SearchSemanticScholar", provide the search query as {{"query": "your search query"}}. If ACTION is "FinalizeIdea", provide the idea details as {{"idea": {{ ... }}}} with the IDEA JSON specified below.>
-
-If you choose to finalize your idea, provide the IDEA JSON in the arguments:
-
-IDEA JSON:
-```json
-{{
-  "idea": {{
-    "Name": "...",
-    "Title": "...",
-    "Short Hypothesis": "...",
-    "Related Work": "...",
-    "Abstract": "...",
-    "Experiments": "...",
-    "Risk Factors and Limitations": "..."
-  }}
-}}
-```
-
-CRITICAL: Ensure the JSON is properly formatted for automatic parsing.
-- Escape all double quotes inside string values as \\"
-- Do not include unescaped newlines in string values - use \\n instead
-- Ensure all strings are properly quoted
-- Test that the JSON would parse correctly before sending
-
-Note: You should perform at least one literature search before finalizing your idea to ensure it is well-informed by existing research."""
-
-# Define the initial idea generation prompt
-idea_generation_prompt = """{workshop_description}
-
-Here are the proposals that you have already generated:
-
-'''
-{prev_ideas_string}
-'''
-
-Begin by generating an interestingly new high-level research proposal that differs from what you have previously proposed.
-"""
-
-# Define the reflection prompt
-idea_reflection_prompt = """Round {current_round}/{num_reflections}.
-
-In your thoughts, first carefully consider the quality, novelty, and feasibility of the proposal you just created.
-Include any other factors that you think are important in evaluating the proposal.
-Ensure the proposal is clear and concise, and the JSON is in the correct format.
-Do not make things overly complicated.
-In the next attempt, try to refine and improve your proposal.
-Stick to the spirit of the original idea unless there are glaring issues.
-
-If you have new information from tools, such as literature search results, incorporate them into your reflection and refine your proposal accordingly.
-
-Results from your last action (if any):
-
-{last_tool_results}
-"""
+# 定义创意反思提示词（从 prompt.yaml 读取）
+idea_reflection_prompt = get_prompt('ideation.idea_reflection')
 
 
 def generate_temp_free_idea(

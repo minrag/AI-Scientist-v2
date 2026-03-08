@@ -7,13 +7,20 @@ import anthropic
 from ai_scientist.utils.model_config import load_model_config
 
 
+# Extended exception list to catch more API errors
 ANTHROPIC_TIMEOUT_EXCEPTIONS = (
     anthropic.RateLimitError,
     anthropic.APIConnectionError,
     anthropic.APITimeoutError,
     anthropic.InternalServerError,
     anthropic.APIStatusError,
+    anthropic.AuthenticationError,
+    anthropic.PermissionDeniedError,
+    anthropic.NotFoundError,
+    anthropic.BadRequestError,
+    Exception,  # Catch all exceptions for debugging
 )
+
 
 
 def get_ai_client(model_type: str, max_retries=2) -> anthropic.Anthropic:
@@ -32,6 +39,10 @@ def get_ai_client(model_type: str, max_retries=2) -> anthropic.Anthropic:
     if config["api_key"]:
         client_kwargs["api_key"] = config["api_key"]
     client_kwargs["max_retries"] = max_retries
+
+    # Set timeout to support long-running requests (>10 minutes)
+    # Default is 600 seconds (10 minutes), set to 1 hours for long experiments
+    client_kwargs["timeout"] = config.get("timeout", 3600)
 
     return anthropic.Anthropic(**client_kwargs)
 
@@ -62,6 +73,10 @@ def query(
 
     filtered_kwargs: dict = select_values(notnone, model_kwargs)
     filtered_kwargs["model"] = model_name
+
+    # Ensure max_tokens is set (required by Anthropic API)
+    if "max_tokens" not in filtered_kwargs:
+        filtered_kwargs["max_tokens"] = config.get("max_tokens", 64000)
 
     if func_spec is not None:
         raise NotImplementedError(

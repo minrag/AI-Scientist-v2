@@ -12,6 +12,7 @@ from .interpreter import ExecutionResult
 from .utils.metric import MetricValue, WorstMetricValue
 from .utils.response import trim_long_string
 from .backend import FunctionSpec, query
+from ai_scientist.utils.prompt_manager import get_prompt
 
 from rich import print
 
@@ -433,22 +434,9 @@ class Journal:
         if len(nodes) == 1:
             return nodes[0]
 
-        # Create evaluation prompt for LLM
-        prompt = {
-            "Introduction": (
-                "You are an experienced AI researcher evaluating different implementations "
-                "of an experiment to select the best one. You should consider all aspects "
-                "including performance metrics, training dynamics, generated plots quality."
-            ),
-            "Task": (
-                "Select the best implementation from the candidates below, considering all available evidence."
-                "Avoid relying too heavily on the validation loss alone, because "
-                "it may not be directly comparable across different objective functions or training details. "
-                "If there are multiple validation losses (e.g., when evaluating multiple datasets), "
-                "consider all of them and select the implementation that performs best overall."
-            ),
-            "Candidates": "",
-        }
+        # 从 prompt.yaml 获取节点选择提示词
+        prompt = get_prompt('journal.node_selection_prompt')
+
         # Gather info about each node
         for node in nodes:
             if not node.is_seed_node:
@@ -507,15 +495,8 @@ class Journal:
         if not self.nodes:
             return "No experiments conducted yet."
 
-        prompt = {
-            "Introduction": (
-                "You are an AI researcher summarizing experimental progress. "
-                "Please analyze both successful and failed experiments to provide insights "
-                "for future improvements."
-            ),
-            "Successful Experiments": "",
-            "Failed Experiments": "",
-        }
+        # 从 prompt.yaml 获取 Journal 摘要提示词
+        prompt = get_prompt('journal.journal_summary_prompt')
 
         for node in self.good_nodes:
             exp_info = f"Design: {node.plan}\n  "
@@ -534,14 +515,12 @@ class Journal:
                 failure_info += f"Code: {node.code}\n"
             prompt["Failed Experiments"] += failure_info
 
+        # 从 prompt.yaml 获取 Journal 摘要用户提示词
+        user_message = get_prompt('journal.journal_summary_user')
+
         summary = query(
             system_message=prompt,
-            user_message=(
-                "Please provide a comprehensive summary of the experimental progress that includes:\n"
-                "1. Key patterns of success across working experiments\n"
-                "2. Common failure patterns and pitfalls to avoid\n"
-                "3. Specific recommendations for future experiments based on both successes and failures"
-            ),
+            user_message=user_message,
             model=model_kwargs.get("model", "review"),
             temperature=model_kwargs.get("temp", 0.3)
         )

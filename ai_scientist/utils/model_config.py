@@ -138,23 +138,17 @@ def create_client(model_type: str) -> Tuple[Any, str]:
     base_url = config["base_url"]
     model_name = config["model_name"]
 
-    if client_type == "openai":
-        client_kwargs = {}
-        if api_key:
-            client_kwargs["api_key"] = api_key
-        if base_url:
-            client_kwargs["base_url"] = base_url
+    client_kwargs = {}
+    if api_key:
+        client_kwargs["api_key"] = api_key
+    if base_url:
+        client_kwargs["base_url"] = base_url
 
+    if client_type == "openai":
         print(f"Using OpenAI API with model {model_name}.")
         return openai.OpenAI(**client_kwargs), model_name
 
     elif client_type == "anthropic":
-        client_kwargs = {}
-        if api_key:
-            client_kwargs["api_key"] = api_key
-        # Anthropic client doesn't use base_url in the same way
-        # It has separate handling for different Anthropic endpoints
-
         print(f"Using Anthropic API with model {model_name}.")
         return anthropic.Anthropic(**client_kwargs), model_name
 

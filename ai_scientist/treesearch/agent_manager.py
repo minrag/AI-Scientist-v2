@@ -9,6 +9,7 @@ from .journal import Journal, Node
 import copy
 import re
 from .backend import query, FunctionSpec
+from ai_scientist.utils.prompt_manager import get_prompt
 import json
 from rich import print
 from .utils.serialize import parse_markdown_to_dict
@@ -18,86 +19,33 @@ from .utils.metric import WorstMetricValue
 logger = logging.getLogger(__name__)
 
 
+# 从 prompt.yaml 读取 Agent Manager 相关配置
+stage_config_spec_dict = get_prompt('agent_manager.stage_config_spec')
 stage_config_spec = FunctionSpec(
-    name="generate_stage_config",
-    description="Generate configuration for the next experimental stage",
-    json_schema={
-        "type": "object",
-        "properties": {
-            "name": {
-                "type": "string",
-                "description": "Brief, descriptive name for the stage",
-            },
-            "description": {
-                "type": "string",
-                "description": "Detailed description of the stage's purpose",
-            },
-            "goals": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "List of specific, measurable goals for this stage",
-            },
-            "max_iterations": {
-                "type": "integer",
-                "description": "Maximum number of iterations to run in this stage",
-            },
-        },
-        "required": ["name", "description", "goals", "max_iterations"],
-    },
+    name=stage_config_spec_dict['name'],
+    description=stage_config_spec_dict['description'],
+    json_schema=stage_config_spec_dict['json_schema'],
 )
 
+stage_progress_eval_spec_dict = get_prompt('agent_manager.stage_progress_eval_spec')
 stage_progress_eval_spec = FunctionSpec(
-    name="evaluate_stage_progression",
-    description="Evaluate readiness to progress to next experimental stage",
-    json_schema={
-        "type": "object",
-        "properties": {
-            "ready_for_next_stage": {
-                "type": "boolean",
-                "description": "Whether the experiment is ready to progress to next stage",
-            },
-            "reasoning": {
-                "type": "string",
-                "description": "Detailed reasoning for the progression decision",
-            },
-            "recommendations": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "Specific recommendations for current or next stage",
-            },
-            "suggested_focus": {
-                "type": "string",
-                "description": "Key areas to focus on in the next iterations",
-            },
-        },
-        "required": ["ready_for_next_stage", "reasoning", "recommendations"],
-    },
+    name=stage_progress_eval_spec_dict['name'],
+    description=stage_progress_eval_spec_dict['description'],
+    json_schema=stage_progress_eval_spec_dict['json_schema'],
 )
 
-
+stage_completion_eval_spec_dict = get_prompt('agent_manager.stage_completion_eval_spec')
 stage_completion_eval_spec = FunctionSpec(
-    name="evaluate_stage_completion",
-    description="Evaluate if the current stage is complete",
-    json_schema={
-        "type": "object",
-        "properties": {
-            "is_complete": {
-                "type": "boolean",
-                "description": "Whether the current stage is complete",
-            },
-            "reasoning": {
-                "type": "string",
-                "description": "Detailed reasoning for the decision",
-            },
-            "missing_criteria": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "List of criteria still needed",
-            },
-        },
-        "required": ["is_complete", "reasoning", "missing_criteria"],
-    },
+    name=stage_completion_eval_spec_dict['name'],
+    description=stage_completion_eval_spec_dict['description'],
+    json_schema=stage_completion_eval_spec_dict['json_schema'],
 )
+
+# 读取提示词模板
+substage_completion_eval_prompt_template = get_prompt('agent_manager.substage_completion_eval_prompt')
+stage2_completion_eval_prompt_template = get_prompt('agent_manager.stage2_completion_eval_prompt')
+generate_substage_goals_prompt_template = get_prompt('agent_manager.generate_substage_goals_prompt')
+stage_progression_eval_prompt_template = get_prompt('agent_manager.stage_progression_eval_prompt')
 
 
 @dataclass
@@ -146,24 +94,13 @@ class AgentManager:
             3: "creative_research",
             4: "ablation_studies",
         }
+        # 从 prompt.yaml 读取主阶段目标
+        main_stage_goals_dict = get_prompt('agent_manager.main_stage_goals')
         self.main_stage_goals: Dict[int, str] = {
-            1: """
-                - Focus on getting basic working implementation
-                - Use a simple dataset
-                - Aim for basic functional correctness
-                - If you are given \"Code To Use\", you can directly use it as a starting point.""",
-            2: """
-                - Change hyperparameters such as learning rate, number of epochs, batch size, etc. to improve the performance
-                - DO NOT change the model architecture from the previous stage
-                - Introduce TWO more new datasets from HuggingFace test the model. Try very hard to think what Huggingface datasets can be used here for testing.""",
-            3: """
-                - Explore novel improvements
-                - Come up with experiments to reveal new insights
-                - Be creative and think outside the box
-                - MAKE SURE you use THREE HuggingFace dataset in total to test your models""",
-            4: """
-                - Conduct systematic component analysis that reveals the contribution of each part
-                - Use the same datasets you used from the previous stage""",
+            1: main_stage_goals_dict['stage_1'],
+            2: main_stage_goals_dict['stage_2'],
+            3: main_stage_goals_dict['stage_3'],
+            4: main_stage_goals_dict['stage_4'],
         }
         # Create initial stage
         self._create_initial_stage()
@@ -177,11 +114,8 @@ class AgentManager:
         )
 
     def _get_task_desc_str(self):
-        task_desc = """You are an ambitious AI researcher who is looking to publish a paper that will contribute significantly to the field.
-You have an idea and you want to conduct creative experiments to gain scientific insights.
-Your aim is to run experiments to gather sufficient results for a top conference paper.
-Your research idea:\n\n
-"""
+        # 从 prompt.yaml 读取任务描述模板
+        task_desc = get_prompt('agent_manager.task_desc_template')
         task_desc += (
             "Title:\n"
             + self.task_desc["Title"]
@@ -349,16 +283,10 @@ Your research idea:\n\n
             return False, "No best node found"
 
         vlm_feedback = self._parse_vlm_feedback(best_node)
-        eval_prompt = f"""
-        Evaluate if the current sub-stage is complete based on the following evidence:
-        1. Figure Analysis:
-        {vlm_feedback}
-
-        Requirements for completion:
-        - {current_substage.goals}
-
-        Provide a detailed evaluation of completion status.
-        """
+        eval_prompt = substage_completion_eval_prompt_template.format(
+            vlm_feedback=vlm_feedback,
+            goals=current_substage.goals
+        )
 
         try:
             evaluation = query(
@@ -453,21 +381,10 @@ Your research idea:\n\n
 
             # Normal stage 2 completion check
             vlm_feedback = self._parse_vlm_feedback(best_node)
-            eval_prompt = f"""
-            Evaluate if stage 2 (baseline tuning) is complete based on the following evidence:
-
-            1. Figure Analysis:
-            {vlm_feedback}
-
-            2. Datasets Tested: {best_node.datasets_successfully_tested}
-
-            Requirements for completion:
-            1. Training curves should show stable convergence
-            2. Results should be tested on at least two datasets
-            3. No major instabilities or issues in the plots
-
-            Provide a detailed evaluation of completion status.
-            """
+            eval_prompt = stage2_completion_eval_prompt_template.format(
+                vlm_feedback=vlm_feedback,
+                datasets_tested=best_node.datasets_successfully_tested
+            )
 
             try:
                 evaluation = query(
@@ -565,30 +482,16 @@ Your research idea:\n\n
         progress = self._analyze_progress(journal)
 
         # Create prompt for the LLM
-        prompt = f"""
-        Based on the current experimental progress, generate focused goals for the next sub-stage.
-
-        Main Stage Goals:
-        {main_stage_goal}
-
-        Current Progress:
-        - Total attempts: {metrics['total_nodes']}
-        - Successful implementations: {metrics['good_nodes']}
-        - Best performance: {metrics['best_metric']['value'] if metrics['best_metric'] else 'N/A'}
-        - Convergence status: {progress['convergence_status']}
-
-        Current Issues:
-        {json.dumps(issues, indent=2)}
-
-        Recent Changes:
-        {json.dumps(progress['recent_changes'], indent=2)}
-
-        Generate specific, actionable sub-stage goals that:
-        1. Address current issues and limitations
-        2. Build on recent progress
-        3. Move towards main stage goals
-        4. Are concrete and measurable
-        """
+        best_metric_str = metrics['best_metric']['value'] if metrics['best_metric'] else 'N/A'
+        prompt = generate_substage_goals_prompt_template.format(
+            main_stage_goal=main_stage_goal,
+            total_nodes=metrics['total_nodes'],
+            good_nodes=metrics['good_nodes'],
+            best_metric=best_metric_str,
+            convergence_status=progress['convergence_status'],
+            issues=json.dumps(issues, indent=2),
+            recent_changes=json.dumps(progress['recent_changes'], indent=2)
+        )
 
         # Define the function specification for the LLM
         substage_goal_spec = FunctionSpec(
@@ -1153,44 +1056,15 @@ Your research idea:\n\n
     ) -> Dict[str, Any]:
         """Evaluate whether experiment is ready for next stage"""
 
-        eval_prompt = f"""
-        Evaluate whether the current experimental stage should progress to the next stage.
-        Consider all available evidence holistically:
-
-        Current Stage Information:
-        - Name: {current_stage.name}
-        - Description: {current_stage.description}
-        - Goals: {', '.join(current_stage.goals) if isinstance(current_stage.goals, list) else current_stage.goals}
-
-        Performance Metrics:
-        {json.dumps(previous_results.get('metrics', {}), indent=2)}
-
-        Identified Issues:
-        {json.dumps(previous_results.get('issues', []), indent=2)}
-
-        Progress Analysis:
-        {json.dumps(previous_results.get('progress', {}), indent=2)}
-
-        Expected Stage Progression:
-        1. Initial Implementation: Focus on basic working implementation
-        2. Baseline Tuning: Systematic optimization of core parameters
-        3. Creative Research: Novel improvements and approaches
-        4. Ablation Studies: Systematic component analysis
-
-        Consider factors like:
-        - Progress toward stage goals
-        - Performance trends and stability
-        - Quality and reliability of results
-        - Understanding of the problem
-        - Presence of systematic issues
-        - Convergence indicators
-        - Readiness for next stage challenges
-
-        Provide a holistic evaluation of whether the experiment should:
-        1. Progress to next stage
-        2. Continue current stage with specific focus
-        3. Extend current stage with modifications
-        """
+        stage_goals_str = ', '.join(current_stage.goals) if isinstance(current_stage.goals, list) else current_stage.goals
+        eval_prompt = stage_progression_eval_prompt_template.format(
+            stage_name=current_stage.name,
+            stage_description=current_stage.description,
+            stage_goals=stage_goals_str,
+            metrics=json.dumps(previous_results.get('metrics', {}), indent=2),
+            issues=json.dumps(previous_results.get('issues', []), indent=2),
+            progress=json.dumps(previous_results.get('progress', {}), indent=2)
+        )
 
         try:
             evaluation = query(

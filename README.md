@@ -274,6 +274,8 @@ semantic_scholar 的 base_url 设置为完整的 https://api.semanticscholar.org
 
 - 在 Journal 类中添加了 completed: bool = field(default=True) 属性，默认值为 True，表示阶段已完成。这样在生成最终报告时，所有阶段都会被正常处理。
 
+- 创建  prompt.yaml ,把硬编码的提示词按照层级放到 prompt.yaml 中,使用中文注释,根据key读取,不要修 prompt的内容,只是从硬编码修改成从 prompt.yaml 读取,不要对业务逻辑有任何影响
+
 
 
 
