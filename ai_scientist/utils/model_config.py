@@ -73,7 +73,32 @@ def load_config() -> Dict[str, Any]:
                     "Install with: pip install omegaconf pyyaml"
                 )
 
+        # Setup environment variables from config
+        setup_environment_variables()
+
     return _config_cache["full_config"]
+
+
+def setup_environment_variables():
+    """Set environment variables from config.yaml.
+
+    This allows configuring environment variables like HF_ENDPOINT for HuggingFace mirror.
+    """
+    # Only set once at module load time
+    if "env_configured" in _config_cache:
+        return
+
+    _config_cache["env_configured"] = True
+
+    # Access the already-loaded config from cache
+    config = _config_cache.get("full_config", {})
+    env_config = config.get("environment", {})
+
+    if env_config:
+        for key, value in env_config.items():
+            if value:  # Only set if value is not empty
+                os.environ[key] = value
+                print(f"Set {key}={value}")
 
 
 def load_model_config(model_type: str) -> Dict[str, Any]:

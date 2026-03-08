@@ -89,3 +89,11 @@ open_alex:
 semantic_scholar:
   api_key: ""
   base_url: "https://api.semanticscholar.org/graph/v1/paper/search"
+
+# 环境变量配置
+# 在程序启动时自动设置这些环境变量
+environment:
+  # HuggingFace 镜像加速(中国区)
+  HF_ENDPOINT: "https://hf-mirror.com"
+  # HuggingFace token(用于下载受保护的数据集)
+  #HF_TOKEN: "your_token_here"
