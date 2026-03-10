@@ -24,7 +24,7 @@ ideation:
     <The action to take, exactly one of {tool_names_str}>
 
     ARGUMENTS:
-    <If ACTION is "SearchOpenAlex" or "SearchSemanticScholar", provide the search query as {{"query": "your search query"}}. If ACTION is "FinalizeIdea", provide the idea details as {{"idea": {{ ... }}}} with the IDEA JSON specified below.>
+    <If ACTION is "SearchOpenAlex", "SearchSemanticScholar", or "SearchPubMed", provide the search query as {{"query": "your search query"}}. If ACTION is "FinalizeIdea", provide the idea details as {{"idea": {{ ... }}}} with the IDEA JSON specified below.>
 
     If you choose to finalize your idea, provide the IDEA JSON in the arguments:
 

@@ -16,11 +16,13 @@ from ai_scientist.utils.prompt_manager import get_prompt
 
 from ai_scientist.tools.semantic_scholar import SemanticScholarSearchTool
 from ai_scientist.tools.open_alex import OpenAlexSearchTool, get_default_search_tool_name
+from ai_scientist.tools.pubmed import PubMedSearchTool
 from ai_scientist.tools.base_tool import BaseTool
 
 # Create tool instances
 open_alex_tool = OpenAlexSearchTool()
 semantic_scholar_tool = SemanticScholarSearchTool()
+pubmed_tool = PubMedSearchTool()
 
 # Static tool definition for FinalizeIdea
 _finalize_idea_tool = {
@@ -41,19 +43,19 @@ The IDEA JSON should include the following fields:
 # academic_search.default_tool should be "open_alex" or "semantic_scholar"
 _default_tool_name = get_default_search_tool_name()
 
+# All search tools available
+_all_search_tools = {
+    "SearchOpenAlex": open_alex_tool,
+    "SearchSemanticScholar": semantic_scholar_tool,
+    "SearchPubMed": pubmed_tool,
+}
+
 # Define tools at the top of the file - default tool comes first
-if _default_tool_name == "SearchOpenAlex":
-    tools = [
-        open_alex_tool,  # Default paper search tool (from config)
-        semantic_scholar_tool,  # Fallback paper search tool
-        _finalize_idea_tool,
-    ]
-else:
-    tools = [
-        semantic_scholar_tool,  # Default paper search tool (from config)
-        open_alex_tool,  # Fallback paper search tool
-        _finalize_idea_tool,
-    ]
+_default_search_tool = _all_search_tools.get(_default_tool_name, open_alex_tool)
+_fallback_search_tools = [
+    tool for name, tool in _all_search_tools.items() if name != _default_tool_name
+]
+tools = [_default_search_tool] + _fallback_search_tools + [_finalize_idea_tool]
 
 # Create a tools dictionary for easy lookup
 tools_dict = {tool.name: tool for tool in tools if isinstance(tool, BaseTool)}

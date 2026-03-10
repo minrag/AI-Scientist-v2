@@ -21,50 +21,52 @@ from ai_scientist.utils.token_tracker import track_token_usage
 
 from ai_scientist.tools.open_alex import search_for_papers as open_alex_search
 from ai_scientist.tools.semantic_scholar import search_for_papers as semantic_scholar_search
+from ai_scientist.tools.pubmed import search_for_papers as pubmed_search
 from ai_scientist.tools.open_alex import get_default_search_tool_name
 
 # Determine default search tool from config.yaml
 _default_tool_name = get_default_search_tool_name()
 
+# Search tool registry: name -> (search_func, display_name)
+_search_tools = {
+    "SearchOpenAlex": (open_alex_search, "OpenAlex"),
+    "SearchSemanticScholar": (semantic_scholar_search, "Semantic Scholar"),
+    "SearchPubMed": (pubmed_search, "PubMed"),
+}
+
 def search_for_papers(query, result_limit=10):
     """Search for papers using configured default tool, with fallback.
 
     Uses the tool specified in config.yaml academic_search.default_tool.
-    If the default tool fails, falls back to the other tool.
+    If the default tool fails, falls back to the other tools.
     """
-    # Use configured default tool first
-    if _default_tool_name == "SearchOpenAlex":
-        # Try OpenAlex first
+    # Build ordered list: default tool first, then the rest as fallbacks
+    default_func, default_name = _search_tools.get(
+        _default_tool_name, (open_alex_search, "OpenAlex")
+    )
+    fallbacks = [
+        (func, name) for key, (func, name) in _search_tools.items()
+        if key != _default_tool_name
+    ]
+
+    # Try default tool first
+    try:
+        papers = default_func(query, result_limit)
+        if papers:
+            return papers
+    except Exception as e:
+        print(f"{default_name} search failed: {e}")
+
+    # Try fallbacks
+    for func, name in fallbacks:
         try:
-            papers = open_alex_search(query, result_limit)
+            papers = func(query, result_limit)
             if papers:
                 return papers
         except Exception as e:
-            print(f"OpenAlex search failed: {e}, trying Semantic Scholar...")
+            print(f"{name} search failed: {e}")
 
-        # Fallback to Semantic Scholar
-        try:
-            papers = semantic_scholar_search(query, result_limit)
-            return papers
-        except Exception as e:
-            print(f"Semantic Scholar search failed: {e}")
-            return None
-    else:
-        # Try Semantic Scholar first
-        try:
-            papers = semantic_scholar_search(query, result_limit)
-            if papers:
-                return papers
-        except Exception as e:
-            print(f"Semantic Scholar search failed: {e}, trying OpenAlex...")
-
-        # Fallback to OpenAlex
-        try:
-            papers = open_alex_search(query, result_limit)
-            return papers
-        except Exception as e:
-            print(f"OpenAlex search failed: {e}")
-            return None
+    return None
 
 from ai_scientist.perform_vlm_review import (
     generate_vlm_img_review,
