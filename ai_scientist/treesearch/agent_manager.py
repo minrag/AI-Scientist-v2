@@ -807,8 +807,8 @@ class AgentManager:
                 }
             }
 
-            with open(notes_dir / "stage_transition_analysis.json", "w") as f:
-                json.dump(analysis_data, f, indent=2)
+            with open(notes_dir / "stage_transition_analysis.json", "w", encoding="utf-8") as f:
+                json.dump(analysis_data, f, indent=2, ensure_ascii=False)
 
         prompt_parts.append(
             "Based on the above comprehensive analysis, determine the appropriate "
@@ -875,8 +875,8 @@ class AgentManager:
             }
         }
 
-        with open(notes_dir / "stage_completion_summary.json", "w") as f:
-            json.dump(completion_data, f, indent=2)
+        with open(notes_dir / "stage_completion_summary.json", "w", encoding="utf-8") as f:
+            json.dump(completion_data, f, indent=2, ensure_ascii=False)
 
     def _get_response(self, prompt: str) -> Dict[str, Any]:
         """Get structured response from LLM for stage configuration.

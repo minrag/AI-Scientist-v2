@@ -347,17 +347,17 @@ if __name__ == "__main__":
     research_summary_path = log_dir + "/research_summary.json"
     ablation_summary_path = log_dir + "/ablation_summary.json"
 
-    with open(draft_summary_path, "w") as draft_file:
-        json.dump(draft_summary, draft_file, indent=2)
+    with open(draft_summary_path, "w", encoding="utf-8") as draft_file:
+        json.dump(draft_summary, draft_file, indent=2, ensure_ascii=False)
 
-    with open(baseline_summary_path, "w") as baseline_file:
-        json.dump(baseline_summary, baseline_file, indent=2)
+    with open(baseline_summary_path, "w", encoding="utf-8") as baseline_file:
+        json.dump(baseline_summary, baseline_file, indent=2, ensure_ascii=False)
 
-    with open(research_summary_path, "w") as research_file:
-        json.dump(research_summary, research_file, indent=2)
+    with open(research_summary_path, "w", encoding="utf-8") as research_file:
+        json.dump(research_summary, research_file, indent=2, ensure_ascii=False)
 
-    with open(ablation_summary_path, "w") as ablation_file:
-        json.dump(ablation_summary, ablation_file, indent=2)
+    with open(ablation_summary_path, "w", encoding="utf-8") as ablation_file:
+        json.dump(ablation_summary, ablation_file, indent=2, ensure_ascii=False)
 
     print(f"Summary reports written to files:")
     print(f"- Draft summary: {draft_summary_path}")

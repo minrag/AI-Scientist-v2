@@ -33,10 +33,10 @@ def print_time():
 
 
 def save_token_tracker(idea_dir):
-    with open(osp.join(idea_dir, "token_tracker.json"), "w") as f:
-        json.dump(token_tracker.get_summary(), f)
-    with open(osp.join(idea_dir, "token_tracker_interactions.json"), "w") as f:
-        json.dump(token_tracker.get_interactions(), f)
+    with open(osp.join(idea_dir, "token_tracker.json"), "w", encoding="utf-8") as f:
+        json.dump(token_tracker.get_summary(), f, ensure_ascii=False)
+    with open(osp.join(idea_dir, "token_tracker_interactions.json"), "w", encoding="utf-8") as f:
+        json.dump(token_tracker.get_interactions(), f, ensure_ascii=False)
 
 
 def parse_arguments():
@@ -246,8 +246,8 @@ if __name__ == "__main__":
 
     # Store raw idea json
     idea_path_json = osp.join(idea_dir, "idea.json")
-    with open(idea_path_json, "w") as f:
-        json.dump(ideas[args.idea_idx], f, indent=4)
+    with open(idea_path_json, "w", encoding="utf-8") as f:
+        json.dump(ideas[args.idea_idx], f, indent=4, ensure_ascii=False)
 
     config_path = "bfts_config.yaml"
     idea_config_path = edit_bfts_config_file(
@@ -320,10 +320,10 @@ if __name__ == "__main__":
             review_img_cap_ref = perform_imgs_cap_ref_review(
                 client, client_model, pdf_path
             )
-            with open(osp.join(idea_dir, "review_text.txt"), "w") as f:
-                f.write(json.dumps(review_text, indent=4))
-            with open(osp.join(idea_dir, "review_img_cap_ref.json"), "w") as f:
-                json.dump(review_img_cap_ref, f, indent=4)
+            with open(osp.join(idea_dir, "review_text.txt"), "w", encoding="utf-8") as f:
+                f.write(json.dumps(review_text, indent=4, ensure_ascii=False))
+            with open(osp.join(idea_dir, "review_img_cap_ref.json"), "w", encoding="utf-8") as f:
+                json.dump(review_img_cap_ref, f, indent=4, ensure_ascii=False)
             print("Paper review completed.")
 
     print("Start cleaning up processes")

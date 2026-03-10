@@ -385,8 +385,8 @@ def generate(cfg, jou: Journal, out_path: Path):
     try:
         # Save the tree data as a JSON file in the same directory
         data_path = out_path.parent / "tree_data.json"
-        with open(data_path, "w") as f:
-            json.dump(tree_struct, f)
+        with open(data_path, "w", encoding="utf-8") as f:
+            json.dump(tree_struct, f, ensure_ascii=False)
     except Exception as e:
         print(f"Error saving tree data JSON: {e}")
 

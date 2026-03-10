@@ -565,8 +565,9 @@ class Journal:
                         notes_dir, f"{stage_name}_node_{node.id}_summary.json"
                     ),
                     "w",
+                    encoding="utf-8",
                 ) as f:
-                    json.dump(summary, f, indent=2)
+                    json.dump(summary, f, indent=2, ensure_ascii=False)
 
         summary_prompt = {
             "Introduction": "Synthesize the experimental findings from this stage",

@@ -661,12 +661,13 @@ def gather_citations(base_folder, num_cite_rounds=20, small_model="small_model")
 
                 if done:
                     # Save final state before exiting
-                    with open(citations_cache_path, "w") as f:
+                    with open(citations_cache_path, "w", encoding="utf-8") as f:
                         f.write(citations_text)
-                    with open(progress_path, "w") as f:
+                    with open(progress_path, "w", encoding="utf-8") as f:
                         json.dump(
                             {"completed_rounds": round_idx + 1, "status": "completed"},
                             f,
+                            ensure_ascii=False,
                         )
                     break
 
@@ -682,25 +683,26 @@ def gather_citations(base_folder, num_cite_rounds=20, small_model="small_model")
                         if new_title not in existing_titles:
                             citations_text += "\n" + addition
                             # Save progress after each successful addition
-                            with open(citations_cache_path, "w") as f:
+                            with open(citations_cache_path, "w", encoding="utf-8") as f:
                                 f.write(citations_text)
-                            with open(progress_path, "w") as f:
+                            with open(progress_path, "w", encoding="utf-8") as f:
                                 json.dump(
                                     {
                                         "completed_rounds": round_idx + 1,
                                         "status": "in_progress",
                                     },
                                     f,
+                                    ensure_ascii=False,
                                 )
 
             except Exception as e:
                 print(f"Error in citation round {round_idx}: {e}")
                 print(traceback.format_exc())
                 # Save progress even if there's an error
-                with open(citations_cache_path, "w") as f:
+                with open(citations_cache_path, "w", encoding="utf-8") as f:
                     f.write(citations_text)
-                with open(progress_path, "w") as f:
-                    json.dump({"completed_rounds": round_idx, "status": "error"}, f)
+                with open(progress_path, "w", encoding="utf-8") as f:
+                    json.dump({"completed_rounds": round_idx, "status": "error"}, f, ensure_ascii=False)
                 continue
 
         return citations_text if citations_text else None

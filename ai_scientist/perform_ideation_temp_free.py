@@ -245,8 +245,8 @@ def generate_temp_free_idea(
     # Save ideas
     ideas = [json.loads(idea_str) for idea_str in idea_str_archive]
 
-    with open(idea_fname, "w") as f:
-        json.dump(ideas, f, indent=4)
+    with open(idea_fname, "w", encoding="utf-8") as f:
+        json.dump(ideas, f, indent=4, ensure_ascii=False)
     print(f"Stored {len(ideas)} ideas in {idea_fname}")
     return ideas
 
