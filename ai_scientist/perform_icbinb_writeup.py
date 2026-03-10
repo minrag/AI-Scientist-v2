@@ -282,7 +282,7 @@ def extract_page_line_counts(pdf_file, first_page, last_page):
     return page_lines
 
 
-def check_page_limit(pdf_file, page_limit=4, timeout=30):
+def check_page_limit(pdf_file, page_limit=10, timeout=30):
     """
     Compile the LaTeX project in a temporary folder, then determine where the
     "References" section begins using cleaned text extraction. Next, count the
@@ -721,7 +721,7 @@ def perform_writeup(
     small_model="small_model",
     big_model="writeup",
     n_writeup_reflections=3,
-    page_limit=4,
+    page_limit=10,
 ):
     pdf_file = osp.join(base_folder, f"{osp.basename(base_folder)}.pdf")
     latex_folder = osp.join(base_folder, "latex")
@@ -1091,7 +1091,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--page-limit",
         type=int,
-        default=4,
+        default=10,
         help="Target page limit for the main paper (excluding references).",
     )
     args = parser.parse_args()
