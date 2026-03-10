@@ -11,7 +11,7 @@
 <p align="center">
   📚 <a href="https://pub.sakana.ai/ai-scientist-v2/paper">[Paper]</a> |
   📝 <a href="https://sakana.ai/ai-scientist-first-publication/"> [Blog Post]</a> |
-  📂 <a href="https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment"> [ICLR2025 Workshop Experiment]</a>
+  📂 <a href="https://github.com/SakanaAI/AI-Scientist-ICLR2026-Workshop-Experiment"> [ICLR2026 Workshop Experiment]</a>
 </p>
 
 Fully autonomous scientific research systems are becoming increasingly capable, with AI playing a pivotal role in transforming how scientific discoveries are made.
@@ -213,7 +213,7 @@ If you use **The AI Scientist-v2** in your research, please cite our work as fol
   title={The AI Scientist-v2: Workshop-Level Automated Scientific Discovery via Agentic Tree Search},
   author={Yamada, Yutaro and Lange, Robert Tjarko and Lu, Cong and Hu, Shengran and Lu, Chris and Foerster, Jakob and Clune, Jeff and Ha, David},
   journal={arXiv preprint arXiv:2504.08066},
-  year={2025}
+  year={2026}
 }
 ```
 
