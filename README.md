@@ -277,6 +277,8 @@ semantic_scholar 的 base_url 设置为完整的 https://api.semanticscholar.org
 
 - 创建  prompt.yaml ,把硬编码的提示词按照层级放到 prompt.yaml 中,使用中文注释,根据key读取,不要修 prompt的内容,只是从硬编码修改成从 prompt.yaml 读取,不要对业务逻辑有任何影响
 
+- 论文模板中添加了```\usepackage{ctex}```支持中文,要安装 XeLaTeX,原来的 pdflatex 对中文支持不好
+
 
 
 

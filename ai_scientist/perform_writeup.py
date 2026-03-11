@@ -87,11 +87,12 @@ def remove_accents_and_clean(s):
 def compile_latex(cwd, pdf_file, timeout=30):
     print("GENERATING LATEX")
 
+    # 使用 XeLaTeX 编译以支持中文 (ctex 包需要 XeLaTeX)
     commands = [
-        ["pdflatex", "-interaction=nonstopmode", "template.tex"],
+        ["xelatex", "-interaction=nonstopmode", "template.tex"],
         ["bibtex", "template"],
-        ["pdflatex", "-interaction=nonstopmode", "template.tex"],
-        ["pdflatex", "-interaction=nonstopmode", "template.tex"],
+        ["xelatex", "-interaction=nonstopmode", "template.tex"],
+        ["xelatex", "-interaction=nonstopmode", "template.tex"],
     ]
 
     for command in commands:
@@ -138,11 +139,12 @@ def detect_pages_before_impact(latex_folder, timeout=30):
         shutil.copytree(latex_folder, temp_dir, dirs_exist_ok=True)
 
         # Compile in the temp folder
+        # 使用 XeLaTeX 编译以支持中文 (ctex 包需要 XeLaTeX)
         commands = [
-            ["pdflatex", "-interaction=nonstopmode", "template.tex"],
+            ["xelatex", "-interaction=nonstopmode", "template.tex"],
             ["bibtex", "template"],
-            ["pdflatex", "-interaction=nonstopmode", "template.tex"],
-            ["pdflatex", "-interaction=nonstopmode", "template.tex"],
+            ["xelatex", "-interaction=nonstopmode", "template.tex"],
+            ["xelatex", "-interaction=nonstopmode", "template.tex"],
         ]
         for command in commands:
             try:

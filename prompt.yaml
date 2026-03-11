@@ -182,53 +182,64 @@ writeup:
     - The main paper should be double-column format, while the appendices can be in single-column format. When in double column format, make sure that tables and figures are correctly placed.
     - Do not change the overall style which is mandated by the conference. Keep to the current method of including the references.bib file.
     - Do not remove the \\graphicspath directive or no figures will be found.
+    - IMPORTANT: Write the entire paper in Chinese (中文). Use professional academic Chinese language and terminology.
 
     Here are some tips for each section of the paper:
 
     - **Title**:
       - Title should be catchy and informative. It should give a good idea of what the paper is about.
       - Try to keep it under 2 lines.
+      - Use Chinese (中文) for the title.
 
     - **Abstract**:
       - TL;DR of the paper.
       - What are we trying to do and why is it relevant?
       - Make sure the abstract reads smoothly and is well-motivated. This should be one continuous paragraph.
+      - Write in Chinese (中文).
 
     - **Introduction**:
       - Longer version of the Abstract, i.e., an overview of the entire paper.
       - Provide context to the study and explain its relevance.
       - If results are inconclusive or negative, present them frankly; if they are positive, you may highlight how the approach effectively addresses the research question or problem.
       - Summarize your contributions, highlighting pertinent findings, insights, or proposed methods.
+      - Write in Chinese (中文).
 
     - **Related Work**:
       - Academic siblings of our work, i.e., alternative attempts in literature at trying to address the same or similar problems.
       - Compare and contrast their approach with yours, noting key differences or similarities.
       - Ensure proper citations are provided.
+      - Write in Chinese (中文).
 
     - **Background**:
       - Present foundational concepts or prior work needed to understand your method.
       - This should include necessary definitions, the problem setting, or relevant theoretical constructs.
+      - Write in Chinese (中文).
 
     - **Method**:
       - Clearly detail what you propose to do and why. If your study aims to address certain hypotheses, describe them and how your method is constructed to test them.
       - If results are negative or inconclusive, you may suggest improvements or discuss possible causes.
+      - Write in Chinese (中文).
 
     - **Experimental Setup**:
       - Explain how you tested your method or hypothesis.
       - Describe necessary details such as data, environment, and baselines, but omit hardware details unless explicitly mentioned.
+      - Write in Chinese (中文).
 
     - **Experiments**:
       - Present the results truthfully according to the data you have. If outcomes are not as expected, discuss it transparently.
       - Include comparisons to baselines if available, and only include analyses supported by genuine data.
       - Try to include all relevant plots and tables. Consider combining multiple plots into one figure if they are related.
+      - Write in Chinese (中文).
 
     - **Conclusion**:
       - Summarize the entire paper, including key strengths or findings.
       - If results are strong, highlight how they might address the research problem.
       - If results are negative or inconclusive, highlight potential improvements or reasons and propose future directions.
+      - Write in Chinese (中文).
 
     - **Appendix**:
       - Place for supplementary material that did not fit in the main paper.
+      - Write in Chinese (中文).
 
     Ensure you are always writing good compilable LaTeX code. Common mistakes that should be fixed include:
     - LaTeX syntax errors (unenclosed math, unmatched braces, etc.).
@@ -236,6 +247,7 @@ writeup:
     - Unescaped special characters: & % $ # _ {{ }} ~ ^ \\
     - Proper table/figure closure.
     - Do not hallucinate new citations or any results not in the logs.
+    - When writing in Chinese (中文), ensure proper punctuation and avoid mixing English punctuation.
 
     CRITICAL LaTeX FORMATTING RULES:
     1. TABLE FORMAT: Use simple tabular environments. DO NOT use \\usepackage{colortbl} features like \\rowcolor, \\columncolor, or \\cellcolor. These cause compilation errors. Use only \\toprule, \\midrule, \\bottomrule from booktabs.
@@ -258,6 +270,7 @@ writeup:
     4. MATH ENVIRONMENTS: Every \\begin{equation} must have \\end{equation}. Every $ must have a closing $. Do not nest math environments.
     5. DO NOT use \\begingroup or \\endgroup manually - let LaTeX handle grouping automatically.
     6. Figure labels must be unique - never reuse \\label{fig:...} or \\label{tab:...}.
+    7. Chinese (中文) text support: The template uses the ctex package for Chinese typesetting. Ensure all Chinese characters are properly rendered.
 
     When returning final code, place it in fenced triple backticks with 'latex' syntax highlighting.
 
@@ -295,6 +308,8 @@ writeup:
     {latex_writeup}
     ```
 
+    IMPORTANT: Write the entire paper in Chinese (中文). Use professional academic Chinese language and terminology.
+
     Produce the final version of the LaTeX manuscript now, ensuring the paper is coherent, concise, and reports results accurately.
     Return the entire file in full, with no unfilled placeholders!
     This must be an acceptable complete LaTeX writeup.
@@ -311,6 +326,7 @@ writeup:
     Now let's reflect and identify any issues (including but not limited to):
     1) Are there any LaTeX syntax errors or style violations we can fix? Refer to the chktex output below.
     2) Is the writing clear, and scientifically rigorous for a workshop focusing on real-world pitfalls?
+      Ensure the Chinese (中文) language is natural and professional.
     3) Have we included all relevant details from the summaries without hallucinating?
     4) Are there short sections (one or two sentences) that could be combined into a single paragraph?
     5) Can we use more information and details (hyperparameters, unused figures, etc.) in the supplementary material? Only add information that is not already covered in the main paper.
@@ -322,10 +338,15 @@ writeup:
     {check_output}
     ```
     8) Issues identified in the VLM reviews of the images, their captions, and related text discussions. Ensure each caption clearly matches its image content and that there is substantial discussion of each figure in the text.
+    Ensure Chinese (中文) captions are grammatically correct and natural.
     VLM reviews:
     ```
     {review_img_cap_ref}
     ```
+
+    IMPORTANT: The paper should be written in Chinese (中文). Ensure all Chinese text is grammatically correct, uses proper academic terminology, and reads naturally.
+
+    If you are done with improvements, include "I am done" in your response.
 
     9) Duplicate figures between main text and appendix. Make sure to remove the duplicate figures from the appendix.
     ```
@@ -1313,48 +1334,58 @@ icbinb_writeup:
     - Do not change the overall style which is mandated by the conference. Keep to the current method of including the references.bib file.
     - Do not remove the \graphicspath directive or no figures will be found.
     - Do not add `Acknowledgements` section to the paper.
+    - IMPORTANT: Write the entire paper in Chinese (中文). Use professional academic Chinese language and terminology.
 
     Here are some tips for each section of the paper:
 
     - **Title**:
       - Title should be catchy and informative. It should give a good idea of what the paper is about.
       - Try to keep it under 2 lines.
+      - Use Chinese (中文) for the title.
 
     - **Abstract**:
       - Brief summary highlighting the nature of the challenge or pitfall explored.
       - Concise motivation of why this matters for real-world deployment.
       - This should be one continuous paragraph.
+      - Write in Chinese (中文).
 
     - **Introduction**:
       - Overview of the issue or challenge being explored.
       - Clearly state why this problem is important, especially for practical or real-world contexts.
       - Summarize your contributions or findings: they may include negative results, real-world pitfalls, unexpected behaviors, or partial improvements.
+      - Write in Chinese (中文).
 
     - **Related Work**:
       - Cite relevant papers or approaches that have tackled similar issues or have encountered similar pitfalls.
       - Compare and contrast with your own findings.
+      - Write in Chinese (中文).
 
     - **Background** (optional):
       - Provide necessary technical or domain-specific background if needed.
+      - Write in Chinese (中文).
 
     - **Method / Problem Discussion**:
       - Detail the problem context or the method if it is relevant to highlight the challenges faced.
       - If results are not strictly an improvement, discuss partial successes or lessons learned.
+      - Write in Chinese (中文).
 
     - **Experiments** (if applicable):
       - Present results truthfully according to the data you have. Negative, unexpected, or inconclusive findings are valid contributions for this workshop.
       - Include figures, tables, or real-world examples that illustrate the pitfalls.
       - Include up to 4 figures in the main text. All other figures should be in the appendix.
+      - Write in Chinese (中文).
 
     - **Conclusion**:
       - Summarize the main lessons learned or contributions.
       - Suggest next steps or future directions, highlighting how these insights can help the community avoid or overcome similar issues.
+      - Write in Chinese (中文).
 
     - **Appendix**:
       - Place for supplementary material that did not fit in the main paper.
       - Add more information and details (hyperparameters, algorithms, etc.) in the supplementary material.
       - Add more plots and tables in the supplementary material. Make sure that this information is not already covered in the main paper.
       - When checking for duplicate figures, be sure to also review their descriptions to catch cases where different figures convey the same information. For example, one figure might present aggregated training accuracy as a single line plot with a shaded standard deviation (e.g., aggregated_training_accuracy.png), while another (per_seed_training_accuracy.png) shows the same data as three separate line plots.
+      - Write in Chinese (中文).
 
     Ensure you are always writing good compilable LaTeX code. Common mistakes that should be fixed include:
     - LaTeX syntax errors (unenclosed math, unmatched braces, etc.).
@@ -1362,6 +1393,7 @@ icbinb_writeup:
     - Unescaped special characters: & % $ # _ {{ }} ~ ^ \\
     - Proper table/figure closure.
     - Do not hallucinate new citations or any results not in the logs.
+    - When writing in Chinese (中文), ensure proper punctuation and avoid mixing English punctuation.
 
     CRITICAL LaTeX FORMATTING RULES:
     1. TABLE FORMAT: Use simple tabular environments. DO NOT use \usepackage{{colortbl}} features like \rowcolor, \columncolor, or \cellcolor. These cause compilation errors. Use only \toprule, \midrule, \bottomrule from booktabs.
@@ -1384,6 +1416,7 @@ icbinb_writeup:
     4. MATH ENVIRONMENTS: Every \begin{{equation}} must have \end{{equation}}. Every $ must have a closing $. Do not nest math environments.
     5. DO NOT use \begingroup or \endgroup manually - let LaTeX handle grouping automatically.
     6. Figure labels must be unique - never reuse \label{{fig:...}} or \label{{tab:...}}.
+    7. Chinese (中文) text support: The template uses the ctex package for Chinese typesetting. Ensure all Chinese characters are properly rendered.
 
     Ensure proper citation usage:
     - Always include references within \begin{{filecontents}}{{references.bib}} ... \\end{{filecontents}}, even if they haven't changed from the previous round.
@@ -1427,6 +1460,8 @@ icbinb_writeup:
     {latex_writeup}
     ```
 
+    IMPORTANT: Write the entire paper in Chinese (中文). Use professional academic Chinese language and terminology.
+
     Produce the final version of the LaTeX manuscript now, ensuring the paper is coherent, concise, and reports results accurately.
     Return the entire file in full, with no unfilled placeholders!
     This must be an acceptable complete LaTeX writeup.
@@ -1444,6 +1479,7 @@ icbinb_writeup:
     Now let's reflect and identify any issues (including but not limited to):
     1) Are there any LaTeX syntax errors or style violations we can fix? Refer to the chktex output below.
     2) Is the writing clear, and scientifically rigorous for a workshop focusing on real-world pitfalls?
+     Ensure the Chinese (中文) language is natural and professional.
     3) Have we included all relevant details from the summaries without hallucinating?
     4) Are there short sections (one or two sentences) that could be combined into a single paragraph?
     5) Can we use more information and details (hyperparameters, unused figures, etc.) in the supplementary material? Only add information that is not already covered in the main paper.
@@ -1455,6 +1491,7 @@ icbinb_writeup:
     {check_output}
     ```
     8) Issues identified in the VLM reviews of the images, their captions, and related text discussions. Ensure each caption clearly matches its image content and that there is substantial discussion of each figure in the text.
+    Ensure Chinese (中文) captions are grammatically correct and natural.
     VLM reviews:
     ```
     {review_img_cap_ref}
@@ -1464,6 +1501,8 @@ icbinb_writeup:
     ```
     {analysis_duplicate_figs}
     ```
+
+    IMPORTANT: The paper should be written in Chinese (中文). Ensure all Chinese text is grammatically correct, uses proper academic terminology, and reads naturally.
 
     Please provide a revised complete LaTeX in triple backticks, or repeat the same if no changes are needed.
     Return the entire file in full, with no unfilled placeholders!
