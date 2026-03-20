@@ -1018,6 +1018,13 @@ metrics_parsing_prompt:
     - "4. Always print the name of the metric before printing the value by specifying the metric name clearly. Avoid vague terms like 'train,' 'val,' or 'test.' Instead, use precise labels such as 'train accuracy,' 'validation loss,' or 'test F1 score,' etc."
     - "5. You only need to print the best or final value for each metric for each dataset"
     - "6. DO NOT CREATE ANY PLOTS"
+    - "7. CRITICAL: When computing metrics that involve tensor operations, ensure proper dimension handling:"
+    - "  - If using .var(dim=N, keepdim=True) or .mean(dim=N, keepdim=True), the result will have shape (batch_size, 1) instead of (batch_size,)"
+    - "  - When converting to numpy and using for boolean indexing, ALWAYS flatten first: array.flatten() or array.squeeze()"
+    - "  - Example BUG: mds_high = final_mds_np > median (fails if final_mds_np has shape (N,1))"
+    - "  - Example FIX: mds_high = final_mds_np.flatten() > median (works correctly)"
+    - "  - Alternative: Remove keepdim=True from the original computation if not needed"
+    - "8. Before using any array for indexing, verify dimensions match: if indexing a 1D array of shape (N,), the boolean mask must also be 1D with shape (N,)"
     - "CRITICAL CODE SAFETY REQUIREMENTS:"
     - "  - NEVER use dict objects directly in f-strings or .format() - extract scalar values first"
     - "  - ALWAYS verify variable names exist BEFORE using them (check spelling matches exactly)"
@@ -1066,6 +1073,11 @@ metrics_parsing_prompt:
             # Extract scalar values, not dicts
             if metrics:
                 print(f'Metrics available: {list(metrics.keys())}')
+
+    # CRITICAL: When working with tensor-derived numpy arrays for indexing:
+    # - Arrays from .var(dim=N, keepdim=True) have shape (N, 1), not (N,)
+    # - Always flatten before boolean indexing: mask = array.flatten() > threshold
+    # - Verify shapes match before indexing: assert mask.shape == target_array.shape
   Response format: |
     Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences),
     followed by a single markdown code block (using the format ```python ... ```) which implements the full code for the metric parsing.
