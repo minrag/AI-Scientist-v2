@@ -49,6 +49,12 @@ def parse_arguments():
         help="Type of writeup to generate (normal=8 page, icbinb=10 page)",
     )
     parser.add_argument(
+        "--page_limit",
+        type=int,
+        default=None,
+        help="Custom page limit for the writeup (overrides writeup-type default)",
+    )
+    parser.add_argument(
         "--load_ideas",
         type=str,
         default="ideas/i_cant_believe_its_not_better.json",
@@ -278,6 +284,13 @@ if __name__ == "__main__":
             num_cite_rounds=args.num_cite_rounds,
             small_model=args.model_citation,
         )
+        # Determine page limit: use custom if provided, otherwise use defaults based on writeup_type
+        if args.page_limit is not None:
+            page_limit = args.page_limit
+        elif args.writeup_type == "normal":
+            page_limit = 8
+        else:
+            page_limit = 10
         for attempt in range(args.writeup_retries):
             print(f"Writeup attempt {attempt+1} of {args.writeup_retries}")
             if args.writeup_type == "normal":
@@ -285,7 +298,7 @@ if __name__ == "__main__":
                     base_folder=idea_dir,
                     small_model=args.model_writeup_small,
                     big_model=args.model_writeup,
-                    page_limit=8,
+                    page_limit=page_limit,
                     citations_text=citations_text,
                 )
             else:
@@ -293,7 +306,7 @@ if __name__ == "__main__":
                     base_folder=idea_dir,
                     small_model=args.model_writeup_small,
                     big_model=args.model_writeup,
-                    page_limit=10,
+                    page_limit=page_limit,
                     citations_text=citations_text,
                 )
             if writeup_success:

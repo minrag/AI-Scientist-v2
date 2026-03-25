@@ -198,7 +198,7 @@ python launch_scientist_bfts.py \
  --model_review review \
  --model_agg_plots plot_aggregation \
  --num_cite_rounds 20 \ 
- --page_limit 10
+ --page_limit 20
 ```
 
 Once the initial experimental stage is complete, you will find a timestamped log folder inside the `experiments/` directory. Navigate to `experiments/"timestamp_ideaname"/logs/0-run/` within that folder to find the tree visualization file `unified_tree_viz.html`.
