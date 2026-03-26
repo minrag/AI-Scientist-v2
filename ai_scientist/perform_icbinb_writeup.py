@@ -839,7 +839,17 @@ def perform_writeup(
             print(traceback.format_exc())
             plot_descriptions_str = "No descriptions available."
 
-        big_model_system_message = get_prompt('icbinb_writeup.writeup_system', page_limit=page_limit)
+        writeup_system_template = get_prompt('icbinb_writeup.writeup_system')
+        data_usage_note = get_prompt('icbinb_writeup.data_usage_note')
+        conclusion_guidance = get_prompt('icbinb_writeup.conclusion_guidance')
+
+        # 组合所有提示词
+        big_model_system_message = f"""{writeup_system_template}
+
+{data_usage_note}
+
+{conclusion_guidance}
+""".format(page_limit=page_limit)
         big_client, big_client_model = create_client(big_model)
         with open(writeup_file, "r") as f:
             writeup_text = f.read()

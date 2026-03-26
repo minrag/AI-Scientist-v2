@@ -320,7 +320,18 @@ def get_citation_addition(
 # 从 prompt.yaml 获取撰写系统提示词模板（使用 page_limit 参数格式化）
 def get_writeup_system_template(page_limit: int) -> str:
     """获取撰写系统提示词模板"""
-    return get_prompt('writeup.system_template', page_limit=page_limit)
+    system_template = get_prompt('writeup.system_template')
+    data_usage_note = get_prompt('writeup.data_usage_note')
+    conclusion_guidance = get_prompt('writeup.conclusion_guidance')
+
+    # 组合所有提示词
+    full_system_message = f"""{system_template}
+
+{data_usage_note}
+
+{conclusion_guidance}
+"""
+    return full_system_message.format(page_limit=page_limit)
 
 
 # 从 prompt.yaml 获取撰写提示词

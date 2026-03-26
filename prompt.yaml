@@ -216,25 +216,54 @@ writeup:
       - Write in Chinese (中文).
 
     - **Method**:
-      - Clearly detail what you propose to do and why. If your study aims to address certain hypotheses, describe them and how your method is constructed to test them.
-      - If results are negative or inconclusive, you may suggest improvements or discuss possible causes.
+      - The Method section is the core of the entire paper and must thoroughly introduce the innovative approach.
+      - Include an architecture diagram showing the overall structure of the method.
+      - Include schematic diagrams illustrating the working principles of key mechanisms.
+      - Use mathematical formulas (LaTeX equation environment) to precisely describe the core computational processes.
+      - Use pseudocode (algorithm environment) to describe the algorithm flow.
+      - Each innovation point should have its own subsection for detailed explanation.
+      - Explain the theoretical rationale and expected benefits of each design choice.
+      - Compare with existing methods to highlight the novel contributions.
       - Write in Chinese (中文).
 
     - **Experimental Setup**:
-      - Explain how you tested your method or hypothesis.
-      - Describe necessary details such as data, environment, and baselines, but omit hardware details unless explicitly mentioned.
+      - Describe which datasets were used (including dataset names, sizes, characteristics, etc.).
+      - Describe the experimental environment and baseline methods.
+      - List hyperparameter settings and training details.
       - Write in Chinese (中文).
 
     - **Experiments**:
-      - Present the results truthfully according to the data you have. If outcomes are not as expected, discuss it transparently.
-      - Include comparisons to baselines if available, and only include analyses supported by genuine data.
-      - Try to include all relevant plots and tables. Consider combining multiple plots into one figure if they are related.
+      - The Experiments section must include the following two subsections:
+
+      **a) Quantitative Experiments**:
+      - Use established quantitative metrics from the field (such as Accuracy, Precision, Recall, F1-score, MSE, MAE, BLEU, ROUGE, etc., selected based on task type).
+      - Present experimental results intuitively through tables and figures.
+      - Conduct fair comparisons with baseline methods.
+      - Perform statistical analysis on results (such as mean, standard deviation, confidence intervals).
+      - Provide detailed discussion of experimental results, explaining why your method performs better.
+
+      **b) Ablation Studies**:
+      - Use controlled variable methods to validate the effectiveness of each innovation point.
+      - If your innovative method contains multiple components (e.g., innovations 1, 2, 3), you need to conduct the following experiments separately:
+        * Performance of the full model
+        * Performance after removing innovation 1
+        * Performance after removing innovation 2
+        * Performance after removing innovation 3
+        * Optional: Performance after removing innovations 1+2, 2+3, or 1+3
+      - Prove that each innovation point is essential through comparison.
+      - Present ablation experiment results clearly using tables or figures.
+      - Analyze the contribution of each component to overall performance.
+
+      - Try to include all relevant plots and tables. Consider combining multiple related plots into one figure.
+      - If synthetic data is used, present it as a controlled experimental setting for rigorous method evaluation.
       - Write in Chinese (中文).
 
     - **Conclusion**:
-      - Summarize the entire paper, including key strengths or findings.
-      - If results are strong, highlight how they might address the research problem.
-      - If results are negative or inconclusive, highlight potential improvements or reasons and propose future directions.
+      - Summarize the entire paper, focusing on key contributions and scientific insights.
+      - Highlight how the proposed methods effectively address the research problem.
+      - Frame any data limitations (e.g., synthetic data) as standard research methodology and opportunities for future validation, NOT as invalidating the results.
+      - Propose future directions that build upon the current findings.
+      - End with a strong, positive statement about the research value.
       - Write in Chinese (中文).
 
     - **Appendix**:
@@ -273,6 +302,26 @@ writeup:
     7. Chinese (中文) text support: The template uses the ctex package for Chinese typesetting. Ensure all Chinese characters are properly rendered.
 
     When returning final code, place it in fenced triple backticks with 'latex' syntax highlighting.
+
+  # 数据说明提示（如使用合成数据）
+  data_usage_note: |
+    IMPORTANT: If synthetic data or simulated experiments are used in this research:
+    - Frame synthetic data as a standard and valid methodology for preliminary research in the field
+    - Emphasize that synthetic experiments allow controlled evaluation of the proposed methods
+    - Highlight the scientific insights gained from these experiments, regardless of data source
+    - If discussing limitations, frame them as opportunities for future real-world validation, not as invalidating the current work
+    - Do NOT conclude that synthetic data makes the results unreliable or the contribution invalid
+    - Focus on the methodological contributions and theoretical insights that are independent of data source
+
+  # 结论写作指导
+  conclusion_guidance: |
+    When writing the Conclusion:
+    - Summarize the key contributions and scientific insights of the work
+    - Highlight the effectiveness of the proposed methods based on the experiments conducted
+    - If using synthetic data, acknowledge it as a stepping stone for future validation, NOT as a fundamental flaw
+    - Frame any limitations as natural boundaries of the current study and opportunities for future work
+    - End with a strong statement about the value and potential impact of the research
+    - DO NOT undermine the entire paper by claiming the experiments are "inaccurate" or "unreliable" due to data choices
 
   # 撰写提示词
   writeup_prompt: |
@@ -1377,19 +1426,50 @@ icbinb_writeup:
       - Write in Chinese (中文).
 
     - **Method / Problem Discussion**:
-      - Detail the problem context or the method if it is relevant to highlight the challenges faced.
+      - The Method section is the core of the entire paper and must thoroughly introduce the innovative approach.
+      - Include an architecture diagram showing the overall structure of the method.
+      - Include schematic diagrams illustrating the working principles of key mechanisms.
+      - Use mathematical formulas (LaTeX equation environment) to precisely describe the core computational processes.
+      - Use pseudocode (algorithm environment) to describe the algorithm flow.
+      - Each innovation point should have its own subsection for detailed explanation.
+      - Explain the theoretical rationale and expected benefits of each design choice.
+      - Compare with existing methods to highlight the novel contributions.
       - If results are not strictly an improvement, discuss partial successes or lessons learned.
       - Write in Chinese (中文).
 
     - **Experiments** (if applicable):
+      - The Experiments section must include the following two subsections:
+
+      **a) Quantitative Experiments**:
+      - Use established quantitative metrics from the field (such as Accuracy, Precision, Recall, F1-score, MSE, MAE, BLEU, ROUGE, etc., selected based on task type).
+      - Present experimental results intuitively through tables and figures.
+      - Conduct fair comparisons with baseline methods.
+      - Perform statistical analysis on results (such as mean, standard deviation, confidence intervals).
+      - Provide detailed discussion of experimental results, explaining why your method performs better.
+
+      **b) Ablation Studies**:
+      - Use controlled variable methods to validate the effectiveness of each innovation point.
+      - If your innovative method contains multiple components (e.g., innovations 1, 2, 3), you need to conduct the following experiments separately:
+        * Performance of the full model
+        * Performance after removing innovation 1
+        * Performance after removing innovation 2
+        * Performance after removing innovation 3
+        * Optional: Performance after removing innovations 1+2, 2+3, or 1+3
+      - Prove that each innovation point is essential through comparison.
+      - Present ablation experiment results clearly using tables or figures.
+      - Analyze the contribution of each component to overall performance.
+
       - Present results truthfully according to the data you have. Negative, unexpected, or inconclusive findings are valid contributions for this workshop.
       - Include figures, tables, or real-world examples that illustrate the pitfalls.
       - Include up to 4 figures in the main text. All other figures should be in the appendix.
       - Write in Chinese (中文).
 
     - **Conclusion**:
-      - Summarize the main lessons learned or contributions.
-      - Suggest next steps or future directions, highlighting how these insights can help the community avoid or overcome similar issues.
+      - Summarize the main contributions and scientific insights of the work.
+      - Highlight the value of the findings, regardless of whether they are positive, negative, or inconclusive.
+      - Frame any data limitations (e.g., synthetic data) as standard research methodology and opportunities for future validation, NOT as invalidating the results.
+      - Suggest next steps or future directions, highlighting how these insights can help the community.
+      - End with a strong statement about the research value and its contribution to the field.
       - Write in Chinese (中文).
 
     - **Appendix**:
@@ -1437,6 +1517,26 @@ icbinb_writeup:
     - Citation format: \cite{{author_year}} - use the actual BibTeX key, NOT ['key'] or [key].
 
     When returning final code, place it in fenced triple backticks with 'latex' syntax highlighting.
+
+  # 数据说明提示（如使用合成数据）
+  data_usage_note: |
+    IMPORTANT: If synthetic data or simulated experiments are used in this research:
+    - Frame synthetic data as a standard and valid methodology for preliminary research in the field
+    - Emphasize that synthetic experiments allow controlled evaluation of the proposed methods
+    - Highlight the scientific insights gained from these experiments, regardless of data source
+    - If discussing limitations, frame them as opportunities for future real-world validation, not as invalidating the current work
+    - Do NOT conclude that synthetic data makes the results unreliable or the contribution invalid
+    - Focus on the methodological contributions and theoretical insights that are independent of data source
+
+  # 结论写作指导
+  conclusion_guidance: |
+    When writing the Conclusion:
+    - Summarize the key contributions and scientific insights of the work
+    - Highlight the effectiveness of the proposed methods based on the experiments conducted
+    - If using synthetic data, acknowledge it as a stepping stone for future validation, NOT as a fundamental flaw
+    - Frame any limitations as natural boundaries of the current study and opportunities for future work
+    - End with a strong statement about the value and potential impact of the research
+    - DO NOT undermine the entire paper by claiming the experiments are "inaccurate" or "unreliable" due to data choices
 
   # 撰写提示词
   writeup_prompt: |
