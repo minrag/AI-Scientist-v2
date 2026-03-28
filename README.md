@@ -253,6 +253,27 @@ The tree search component implemented within the `ai_scientist` directory is bui
 
 [![Star History Chart](https://api.star-history.com/svg?repos=SakanaAI/AI-Scientist-v2&type=Date)](https://star-history.com/#SakanaAI/AI-Scientist-v2&Date)
 
+## 修改标题和作者
+### icbinb
+修改```ai_scientist/blank_icbinb_latex/icbinb.sty``` :
+- 第 95 行, 标题: ```Under review as a workshop paper at ICLR 2026```
+- 第 100 行, 作者: ```Anonymous authors\\Paper under double-blind review```
+
+### icml
+修改```ai_scientist/blank_icml_latex/icml.sty```: 
+- 第 129-130 行,匿名评审版本(默认), 页脚: ```Preliminary work.  Under review by the
+International Conference on Machine Learning (ICML)\@.  Do not distribute.```
+- 第 119-122 行,正式审核版本, 页脚: ```{Proceedings of the
+$\mathit{41}^{st}$ International Conference on Machine Learning},
+Vancouver, Canada. PMLR 267, 2026.
+Copyright 2026 by the author(s).```
+- 第 482 行, 作者: ```Anonymous Authors``` 
+- 第 513 行, 单位: ```Anonymous Institution...```
+- 第 525 行, 作者信息: ```Anonymous Author <anon.email@domain.com>```
+
+## 语言
+批量替换 ```prompt```中```Chinese(中文)```,修需要的语言,例如```English(英文)```
+
 ## qwen3.5-plus 提示词
 - 修改整个项目的模型调用,不要在硬编码模型名称,而是通过config.yaml中的配置的模型类型,写个函数统一读取config.yaml文件,获取模型的主要配置,包括api_key,base_url,model_name, 现有代码传递的model修改为model_type,方法内根据model_type获取api_key,base_url,model_name.模型的配置从配置文件读取,不要读取环境变量.
 - 去掉ollama支持,去掉max_tokens参数.
