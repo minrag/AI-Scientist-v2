@@ -272,7 +272,7 @@ Copyright 2026 by the author(s).```
 - 第 525 行, 作者信息: ```Anonymous Author <anon.email@domain.com>```
 
 ## 语言
-批量替换 ```prompt```中```Chinese(中文)```,修需要的语言,例如```English(英文)```
+批量替换 ```prompt.yaml``` 中 ```Chinese(中文)```,修改需要的语言,例如: ```English(英文)```
 
 ## qwen3.5-plus 提示词
 - 修改整个项目的模型调用,不要在硬编码模型名称,而是通过config.yaml中的配置的模型类型,写个函数统一读取config.yaml文件,获取模型的主要配置,包括api_key,base_url,model_name, 现有代码传递的model修改为model_type,方法内根据model_type获取api_key,base_url,model_name.模型的配置从配置文件读取,不要读取环境变量.
