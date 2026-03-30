@@ -273,6 +273,8 @@ Copyright 2026 by the author(s).```
 
 ## 语言
 批量替换 ```prompt.yaml``` 中 ```Chinese(中文)```,修改需要的语言,例如: ```English(英文)```
+英文状态下,如果还是有 ```图1```,```表1``` 这样的中文,
+可以删除 ```./ai_scientist/blank_icbinb_latex/template.tex``` 和 ```./ai_scientist/blank_icml_latex/template.tex``` 中的中文支持
 
 ## qwen3.5-plus 提示词
 - 修改整个项目的模型调用,不要在硬编码模型名称,而是通过config.yaml中的配置的模型类型,写个函数统一读取config.yaml文件,获取模型的主要配置,包括api_key,base_url,model_name, 现有代码传递的model修改为model_type,方法内根据model_type获取api_key,base_url,model_name.模型的配置从配置文件读取,不要读取环境变量.
