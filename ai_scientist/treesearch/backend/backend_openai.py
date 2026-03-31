@@ -70,6 +70,8 @@ def query(
     filtered_kwargs["model"] = model_name
 
     messages = opt_messages_to_list(system_message, user_message)
+    if system_message is not None and user_message is None:
+        messages = [{"role": "user", "content": system_message}]
 
     if func_spec is not None:
         filtered_kwargs["tools"] = [func_spec.as_openai_tool_dict]
