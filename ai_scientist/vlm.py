@@ -19,6 +19,9 @@ from ai_scientist.utils.model_config import create_client
 from ai_scientist.utils.token_tracker import track_token_usage
 
 
+RETRYABLE_VLM_ERRORS = (Exception,)
+
+
 def encode_image_to_base64(image_path: str) -> str:
     """Convert an image to base64 string.
 
@@ -68,10 +71,8 @@ def make_vlm_call(client, model, temperature, system_message, prompt):
 
 @backoff.on_exception(
     backoff.expo,
-    (
-        openai.RateLimitError,
-        openai.APITimeoutError,
-    ),
+    RETRYABLE_VLM_ERRORS,
+    max_tries=5,
 )
 def get_response_from_vlm(
     msg: str,
@@ -189,10 +190,8 @@ def extract_json_between_markers(llm_output: str) -> dict | None:
 
 @backoff.on_exception(
     backoff.expo,
-    (
-        openai.RateLimitError,
-        openai.APITimeoutError,
-    ),
+    RETRYABLE_VLM_ERRORS,
+    max_tries=5,
 )
 def get_batch_responses_from_vlm(
     msg: str,

@@ -17,18 +17,38 @@ from ai_scientist.utils.model_config import create_client, load_model_config
 from ai_scientist.utils.token_tracker import track_token_usage
 
 
+RETRYABLE_LLM_ERRORS = (Exception,)
+
+
 # Get N responses from a single message, used for ensembling.
 @backoff.on_exception(
     backoff.expo,
-    (
-        openai.RateLimitError,
-        openai.APITimeoutError,
-        openai.InternalServerError,
-        anthropic.RateLimitError,
-    ),
+    RETRYABLE_LLM_ERRORS,
+    max_tries=5,
 )
-@track_token_usage
 def get_batch_responses_from_llm(
+    prompt,
+    client,
+    model,
+    system_message,
+    print_debug=False,
+    msg_history=None,
+    temperature=0.7,
+    n_responses=1,
+) -> tuple[list[str], list[list[dict[str, Any]]]]:
+    return _get_batch_responses_from_llm_once(
+        prompt,
+        client,
+        model,
+        system_message,
+        print_debug=print_debug,
+        msg_history=msg_history,
+        temperature=temperature,
+        n_responses=n_responses,
+    )
+
+
+def _get_batch_responses_from_llm_once(
     prompt,
     client,
     model,
@@ -65,7 +85,7 @@ def get_batch_responses_from_llm(
         content = []
         new_msg_histories = []
         for _ in range(n_responses):
-            c, hist = get_response_from_llm(
+            c, hist = _get_response_from_llm_once(
                 msg,
                 client,
                 model,
@@ -124,39 +144,50 @@ def make_llm_call(client, model, temperature, system_message, prompt):
     is_anthropic = isinstance(client, anthropic.Anthropic)
 
     if is_anthropic:
-        # Anthropic API
-        return client.chat.completions.create(
+        return client.messages.create(
             model=model,
-            messages=[
-                {"role": "system", "content": system_message},
-                *prompt,
-            ],
             temperature=temperature,
-            n=1,
+            system=system_message,
+            messages=prompt,
         )
-    else:
-        # OpenAI API
-        return client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_message},
-                *prompt,
-            ],
-            temperature=temperature,
-            n=1,
-        )
+
+    return client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_message},
+            *prompt,
+        ],
+        temperature=temperature,
+        n=1,
+    )
 
 
 @backoff.on_exception(
     backoff.expo,
-    (
-        openai.RateLimitError,
-        openai.APITimeoutError,
-        openai.InternalServerError,
-        anthropic.RateLimitError,
-    ),
+    RETRYABLE_LLM_ERRORS,
+    max_tries=5,
 )
 def get_response_from_llm(
+    prompt,
+    client,
+    model,
+    system_message,
+    print_debug=False,
+    msg_history=None,
+    temperature=0.7,
+) -> tuple[str, list[dict[str, Any]]]:
+    return _get_response_from_llm_once(
+        prompt,
+        client,
+        model,
+        system_message,
+        print_debug=print_debug,
+        msg_history=msg_history,
+        temperature=temperature,
+    )
+
+
+def _get_response_from_llm_once(
     prompt,
     client,
     model,
