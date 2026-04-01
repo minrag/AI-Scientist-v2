@@ -17,12 +17,14 @@ from ai_scientist.utils.prompt_manager import get_prompt
 from ai_scientist.tools.semantic_scholar import SemanticScholarSearchTool
 from ai_scientist.tools.open_alex import OpenAlexSearchTool, get_default_search_tool_name
 from ai_scientist.tools.pubmed import PubMedSearchTool
+from ai_scientist.tools.arxiv import ArxivSearchTool
 from ai_scientist.tools.base_tool import BaseTool
 
 # Create tool instances
 open_alex_tool = OpenAlexSearchTool()
 semantic_scholar_tool = SemanticScholarSearchTool()
 pubmed_tool = PubMedSearchTool()
+arxiv_tool = ArxivSearchTool()
 
 # Static tool definition for FinalizeIdea
 _finalize_idea_tool = {
@@ -48,6 +50,7 @@ _all_search_tools = {
     "SearchOpenAlex": open_alex_tool,
     "SearchSemanticScholar": semantic_scholar_tool,
     "SearchPubMed": pubmed_tool,
+    "SearchArxiv": arxiv_tool,
 }
 
 # Define tools at the top of the file - default tool comes first

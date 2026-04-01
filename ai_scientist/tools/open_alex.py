@@ -53,6 +53,7 @@ def get_default_search_tool_name() -> str:
             "open_alex": "SearchOpenAlex",
             "semantic_scholar": "SearchSemanticScholar",
             "pubmed": "SearchPubMed",
+            "arxiv": "SearchArxiv",
         }
         return tool_mapping.get(default_tool, "SearchOpenAlex")
     except Exception:

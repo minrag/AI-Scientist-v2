@@ -22,6 +22,7 @@ from ai_scientist.utils.token_tracker import track_token_usage
 from ai_scientist.tools.open_alex import search_for_papers as open_alex_search
 from ai_scientist.tools.semantic_scholar import search_for_papers as semantic_scholar_search
 from ai_scientist.tools.pubmed import search_for_papers as pubmed_search
+from ai_scientist.tools.arxiv import search_for_papers as arxiv_search
 from ai_scientist.tools.open_alex import get_default_search_tool_name
 
 # Determine default search tool from config.yaml
@@ -32,6 +33,7 @@ _search_tools = {
     "SearchOpenAlex": (open_alex_search, "OpenAlex"),
     "SearchSemanticScholar": (semantic_scholar_search, "Semantic Scholar"),
     "SearchPubMed": (pubmed_search, "PubMed"),
+    "SearchArxiv": (arxiv_search, "arXiv"),
 }
 
 def search_for_papers(query, result_limit=10):

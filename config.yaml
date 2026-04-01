@@ -95,6 +95,10 @@ pubmed:
   api_key: ""
   base_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
+# arXiv API 配置
+arxiv:
+  base_url: "http://export.arxiv.org/api/query"
+
 # 环境变量配置
 # 在程序启动时自动设置这些环境变量
 environment:
