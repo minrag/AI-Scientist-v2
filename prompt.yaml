@@ -229,6 +229,7 @@ writeup:
 
     - **Experimental Setup**:
       - Describe which datasets were used (including dataset names, sizes, characteristics, etc.).
+      - CRITICAL: You MUST use existing, publicly available datasets. DO NOT use synthetic or simulated data.
       - Describe the experimental environment and baseline methods.
       - List hyperparameter settings and training details.
       - Write in English(英文).
@@ -237,13 +238,16 @@ writeup:
       - The Experiments section must include the following two subsections:
 
       **a) Quantitative Experiments**:
+      - CRITICAL PURPOSE: Provide sufficient quantitative data to prove the proposed algorithm is effective and trustworthy, supporting the paper's core claims and forming a logical loop with the paper's assertions.
       - Use established quantitative metrics from the field (such as Accuracy, Precision, Recall, F1-score, MSE, MAE, BLEU, ROUGE, etc., selected based on task type).
       - Present experimental results intuitively through tables and figures.
       - Conduct fair comparisons with baseline methods.
       - Perform statistical analysis on results (such as mean, standard deviation, confidence intervals).
       - Provide detailed discussion of experimental results, explaining why your method performs better.
+      - Ensure the experimental results directly support and form a logical loop with the paper's core claims.
 
       **b) Ablation Studies**:
+      - CRITICAL PURPOSE: Provide in-depth experimental data to prove that each innovative component proposed in the paper is necessary, and quantify the impact and contribution of each innovative component on overall performance.
       - Use controlled variable methods to validate the effectiveness of each innovation point.
       - If your innovative method contains multiple components (e.g., innovations 1, 2, 3), you need to conduct the following experiments separately:
         * Performance of the full model
@@ -253,16 +257,16 @@ writeup:
         * Optional: Performance after removing innovations 1+2, 2+3, or 1+3
       - Prove that each innovation point is essential through comparison.
       - Present ablation experiment results clearly using tables or figures.
-      - Analyze the contribution of each component to overall performance.
+      - Quantify the contribution of each component to overall performance with specific metrics and analysis.
 
       - Try to include all relevant plots and tables. Consider combining multiple related plots into one figure.
-      - If synthetic data is used, present it as a controlled experimental setting for rigorous method evaluation.
+      - CRITICAL: DO NOT use synthetic or simulated data. All experiments MUST be conducted on real, existing datasets.
       - Write in English(英文).
 
     - **Conclusion**:
       - Summarize the entire paper, focusing on key contributions and scientific insights.
       - Highlight how the proposed methods effectively address the research problem.
-      - Frame any data limitations (e.g., synthetic data) as standard research methodology and opportunities for future validation, NOT as invalidating the results.
+      - Discuss any limitations of the experimental setup and propose future directions.
       - Propose future directions that build upon the current findings.
       - End with a strong, positive statement about the research value.
       - Write in English(英文).
@@ -304,25 +308,13 @@ writeup:
 
     When returning final code, place it in fenced triple backticks with 'latex' syntax highlighting.
 
-  # 数据说明提示（如使用合成数据）
-  data_usage_note: |
-    IMPORTANT: If synthetic data or simulated experiments are used in this research:
-    - Frame synthetic data as a standard and valid methodology for preliminary research in the field
-    - Emphasize that synthetic experiments allow controlled evaluation of the proposed methods
-    - Highlight the scientific insights gained from these experiments, regardless of data source
-    - If discussing limitations, frame them as opportunities for future real-world validation, not as invalidating the current work
-    - Do NOT conclude that synthetic data makes the results unreliable or the contribution invalid
-    - Focus on the methodological contributions and theoretical insights that are independent of data source
-
   # 结论写作指导
   conclusion_guidance: |
     When writing the Conclusion:
     - Summarize the key contributions and scientific insights of the work
     - Highlight the effectiveness of the proposed methods based on the experiments conducted
-    - If using synthetic data, acknowledge it as a stepping stone for future validation, NOT as a fundamental flaw
-    - Frame any limitations as natural boundaries of the current study and opportunities for future work
+    - Discuss any limitations as natural boundaries of the current study and opportunities for future work
     - End with a strong statement about the value and potential impact of the research
-    - DO NOT undermine the entire paper by claiming the experiments are "inaccurate" or "unreliable" due to data choices
 
   # 撰写提示词
   writeup_prompt: |
@@ -1219,7 +1211,7 @@ plot_aggregation:
     3) Make sure to use existing .npy data for analysis; do NOT hallucinate data. If single numeric results are needed, these may be copied from the JSON summaries.
     4) Only create plots where the data is best presented as a figure and not as a table. E.g. don't use bar plots if the data is hard to visually compare.
     5) The final aggregator script must be in triple backticks and stand alone so it can be dropped into a codebase and run.
-    6) If there are plots based on synthetic data, include them in the appendix.
+    6) CRITICAL: DO NOT use synthetic data. All plots MUST be based on real, existing datasets.
 
     Implement best practices:
     - Do not produce extraneous or irrelevant plots.
@@ -1442,13 +1434,16 @@ icbinb_writeup:
       - The Experiments section must include the following two subsections:
 
       **a) Quantitative Experiments**:
+      - CRITICAL PURPOSE: Provide sufficient quantitative data to prove the proposed algorithm is effective and trustworthy, supporting the paper's core claims and forming a logical loop with the paper's assertions.
       - Use established quantitative metrics from the field (such as Accuracy, Precision, Recall, F1-score, MSE, MAE, BLEU, ROUGE, etc., selected based on task type).
       - Present experimental results intuitively through tables and figures.
       - Conduct fair comparisons with baseline methods.
       - Perform statistical analysis on results (such as mean, standard deviation, confidence intervals).
       - Provide detailed discussion of experimental results, explaining why your method performs better.
+      - Ensure the experimental results directly support and form a logical loop with the paper's core claims.
 
       **b) Ablation Studies**:
+      - CRITICAL PURPOSE: Provide in-depth experimental data to prove that each innovative component proposed in the paper is necessary, and quantify the impact and contribution of each innovative component on overall performance.
       - Use controlled variable methods to validate the effectiveness of each innovation point.
       - If your innovative method contains multiple components (e.g., innovations 1, 2, 3), you need to conduct the following experiments separately:
         * Performance of the full model
@@ -1458,7 +1453,7 @@ icbinb_writeup:
         * Optional: Performance after removing innovations 1+2, 2+3, or 1+3
       - Prove that each innovation point is essential through comparison.
       - Present ablation experiment results clearly using tables or figures.
-      - Analyze the contribution of each component to overall performance.
+      - Quantify the contribution of each component to overall performance with specific metrics and analysis.
 
       - Present results truthfully according to the data you have. Negative, unexpected, or inconclusive findings are valid contributions for this workshop.
       - Include figures, tables, or real-world examples that illustrate the pitfalls.
@@ -1468,7 +1463,7 @@ icbinb_writeup:
     - **Conclusion**:
       - Summarize the main contributions and scientific insights of the work.
       - Highlight the value of the findings, regardless of whether they are positive, negative, or inconclusive.
-      - Frame any data limitations (e.g., synthetic data) as standard research methodology and opportunities for future validation, NOT as invalidating the results.
+      - Frame any limitations as natural boundaries of the current study and opportunities for future validation.
       - Suggest next steps or future directions, highlighting how these insights can help the community.
       - End with a strong statement about the research value and its contribution to the field.
       - Write in English(英文).
@@ -1518,26 +1513,6 @@ icbinb_writeup:
     - Citation format: \cite{{author_year}} - use the actual BibTeX key, NOT ['key'] or [key].
 
     When returning final code, place it in fenced triple backticks with 'latex' syntax highlighting.
-
-  # 数据说明提示（如使用合成数据）
-  data_usage_note: |
-    IMPORTANT: If synthetic data or simulated experiments are used in this research:
-    - Frame synthetic data as a standard and valid methodology for preliminary research in the field
-    - Emphasize that synthetic experiments allow controlled evaluation of the proposed methods
-    - Highlight the scientific insights gained from these experiments, regardless of data source
-    - If discussing limitations, frame them as opportunities for future real-world validation, not as invalidating the current work
-    - Do NOT conclude that synthetic data makes the results unreliable or the contribution invalid
-    - Focus on the methodological contributions and theoretical insights that are independent of data source
-
-  # 结论写作指导
-  conclusion_guidance: |
-    When writing the Conclusion:
-    - Summarize the key contributions and scientific insights of the work
-    - Highlight the effectiveness of the proposed methods based on the experiments conducted
-    - If using synthetic data, acknowledge it as a stepping stone for future validation, NOT as a fundamental flaw
-    - Frame any limitations as natural boundaries of the current study and opportunities for future work
-    - End with a strong statement about the value and potential impact of the research
-    - DO NOT undermine the entire paper by claiming the experiments are "inaccurate" or "unreliable" due to data choices
 
   # 撰写提示词
   writeup_prompt: |
