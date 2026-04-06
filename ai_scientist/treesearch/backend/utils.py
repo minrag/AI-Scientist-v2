@@ -15,19 +15,23 @@ from typing import Callable
 logger = logging.getLogger("ai-scientist")
 
 
-@backoff.on_predicate(
-    wait_gen=backoff.expo,
-    max_value=60,
-    factor=1.5,
-)
 def backoff_create(
     create_fn: Callable, retry_exceptions: list[Exception], *args, **kwargs
 ):
-    try:
+    @backoff.on_exception(
+        wait_gen=backoff.expo,
+        exception=tuple(retry_exceptions),
+        max_value=60,
+        factor=1.5,
+    )
+    def _call():
         return create_fn(*args, **kwargs)
+
+    try:
+        return _call()
     except retry_exceptions as e:
-        logger.info(f"Backoff exception: {e}")
-        return False
+        logger.info(f"Backoff gave up after retries: {e}")
+        raise
 
 
 def opt_messages_to_list(

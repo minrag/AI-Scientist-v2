@@ -140,6 +140,7 @@ def load_model_config(model_type: str) -> Dict[str, Any]:
         "base_url": model_config.get("base_url", None),
         "api_key": model_config.get("api_key", ""),
         "model_name": model_config["model_name"],
+        "timeout": model_config.get("timeout", 1800),
     }
 
 

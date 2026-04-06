@@ -38,6 +38,8 @@ def get_ai_client(model_type: str, max_retries=2) -> openai.OpenAI:
     if config["base_url"]:
         client_kwargs["base_url"] = config["base_url"]
     client_kwargs["max_retries"] = max_retries
+    if config.get("timeout") is not None:
+        client_kwargs["timeout"] = config["timeout"]
 
     return openai.OpenAI(**client_kwargs)
 
@@ -68,6 +70,8 @@ def query(
 
     filtered_kwargs: dict = select_values(notnone, model_kwargs)
     filtered_kwargs["model"] = model_name
+    if "timeout" not in filtered_kwargs:
+        filtered_kwargs["timeout"] = config.get("timeout", 1800)
 
     messages = opt_messages_to_list(system_message, user_message)
     if system_message is not None and user_message is None:
