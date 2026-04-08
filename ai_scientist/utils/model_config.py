@@ -164,6 +164,8 @@ def create_client(model_type: str) -> Tuple[Any, str]:
     base_url = config["base_url"]
     model_name = config["model_name"]
 
+    timeout = config.get("timeout", 1800)
+
     client_kwargs = {}
     if api_key:
         client_kwargs["api_key"] = api_key
@@ -172,11 +174,11 @@ def create_client(model_type: str) -> Tuple[Any, str]:
 
     if client_type == "openai":
         print(f"Using OpenAI API with model {model_name}.")
-        return openai.OpenAI(**client_kwargs), model_name
+        return openai.OpenAI(timeout=timeout, **client_kwargs), model_name
 
     elif client_type == "anthropic":
         print(f"Using Anthropic API with model {model_name}.")
-        return anthropic.Anthropic(**client_kwargs), model_name
+        return anthropic.Anthropic(timeout=timeout, **client_kwargs), model_name
 
     else:
         raise ValueError(
