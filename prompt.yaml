@@ -217,48 +217,46 @@ writeup:
       - Write in English(英文).
 
     - **Method**:
-      - The Method section is the absolute core of the entire paper. It must comprehensively and rigorously introduce the proposed innovative method. Use framework diagrams, principle schematics, mathematical formulas, and pseudocode to provide exhaustive detail.
-      - **Framework/Architecture Diagram**: Include a clear, professional diagram (LaTeX TikZ or included figure) that shows the complete pipeline and data flow of the proposed method. This should serve as the reader's first visual entry point for understanding the overall structure.
-      - **Principle/Schematic Diagrams**: For each key mechanism or novel component, include a dedicated schematic that illustrates how it works conceptually and visually.
-      - **Mathematical Formulas**: Use LaTeX equation environments to precisely and completely describe all core computational processes. Every formula should be numbered and properly referenced in the text. Define all variables and symbols clearly upon first appearance.
-      - **Pseudocode**: Provide a complete algorithm description using the LaTeX algorithm/algorithmic environment that details the step-by-step computation flow of the proposed method.
-      - **Per-Innovation Subsections**: Each individual innovation/contribution must have its own well-labeled subsection with detailed explanation, theoretical motivation, and formal description.
-      - **Theoretical Rationale**: For each design choice, explain the theoretical reasoning behind it and the expected benefits it brings to the overall method.
-      - **Comparison with Existing Methods**: Systematically compare the proposed method with existing approaches to highlight the novelty and advantages of each contribution.
+      - The Method section is the core of the entire paper and must thoroughly introduce the innovative approach.
+      - Include an architecture diagram showing the overall structure of the method.
+      - Include schematic diagrams illustrating the working principles of key mechanisms.
+      - Use mathematical formulas (LaTeX equation environment) to precisely describe the core computational processes.
+      - Use pseudocode (algorithm environment) to describe the algorithm flow.
+      - Each innovation point should have its own subsection for detailed explanation.
+      - Explain the theoretical rationale and expected benefits of each design choice.
+      - Compare with existing methods to highlight the novel contributions.
       - Write in English(英文).
 
     - **Experimental Setup**:
-      - **Datasets**: **Strongly prefer using real, publicly-available benchmark datasets** that are widely recognized and used by the academic community (e.g., from HuggingFace, UCI, Kaggle, or domain-specific repositories). **Synthetic or simulated data should only be used as a last resort when no suitable real-world dataset exists for the task.** Synthesize or construct synthetic data ONLY if: (a) no public dataset covers the specific research scenario being investigated, or (b) the research specifically requires a controlled environment to validate a novel phenomenon. For each dataset, specify its name, source, size, key characteristics, and why it is appropriate for this task. Describe the train/validation/test split criteria. If synthetic data is used, clearly justify why real data was not suitable and describe the generation process in detail.
-      - **Baseline Methods**: Include comparisons with multiple established baseline methods from the literature. Clearly identify each baseline and its reference.
-      - **Environment & Hyperparameters**: List the experimental environment (hardware, software, frameworks) and all hyperparameter settings (learning rate, batch size, optimizer, epochs, etc.) in detail.
-      - **Evaluation Metrics**: Specify the quantitative metrics used for evaluation, chosen based on the task type (e.g., Accuracy, Precision, Recall, F1-score, MSE, MAE, BLEU, ROUGE, etc.).
+      - Describe which datasets were used (including dataset names, sizes, characteristics, etc.).
+      - Describe the experimental environment and baseline methods.
+      - List hyperparameter settings and training details.
       - Write in English(英文).
 
     - **Experiments**:
       - The Experiments section must include the following two subsections:
 
-      **a) Quantitative Experiments** (定量实验):
-      - The goal of this subsection is to rigorously demonstrate, through comprehensive quantitative data, that the proposed algorithm is **effective, reliable, and credible**, forming a **logical closed loop with the paper's core thesis**.
-      - Use established, academically-recognized quantitative metrics appropriate for the task domain.
-      - Present results primarily through well-designed tables and figures for intuitive comparison. Include comparison tables with all baseline methods.
-      - Conduct fair and direct comparisons with all selected baseline methods using identical datasets and evaluation protocols.
-      - Provide statistical analysis of results (mean, standard deviation, confidence intervals, statistical significance tests where applicable).
-      - Provide an in-depth discussion of the experimental results: explain **why** the proposed method outperforms baselines, connect the performance gains back to specific design choices in the Method section, and ensure results directly support the paper's central claims.
-      - The quantitative evidence must be sufficient and convincing to substantiate every major claim made in the paper.
+      **a) Quantitative Experiments**:
+      - Use established quantitative metrics from the field (such as Accuracy, Precision, Recall, F1-score, MSE, MAE, BLEU, ROUGE, etc., selected based on task type).
+      - Present experimental results intuitively through tables and figures.
+      - Conduct fair comparisons with baseline methods.
+      - Perform statistical analysis on results (such as mean, standard deviation, confidence intervals).
+      - Provide detailed discussion of experimental results, explaining why your method performs better.
 
-      **b) Ablation Studies** (消融实验):
-      - The goal of this subsection is to conduct **controlled-variable experiments** that rigorously prove **each individual innovation component is necessary** and to **quantify the contribution of each component to the overall performance**.
-      - If the proposed method has N innovation points (e.g., innovations 1, 2, 3), conduct the following ablation experiments systematically:
-        * **Full model** (all innovation points 1+2+3...N intact): serves as the upper bound / reference.
-        * **Single-component removals**: Remove innovation 1 only (keeping 2,3...N), measure performance drop → proves innovation 1 is essential. Repeat for innovation 2, innovation 3, and each individual component.
-        * **Multi-component combinations** (optional but recommended): Remove pairs such as 1+2, 2+3, 1+3, etc., and compare against the full model to reveal potential synergistic or compensatory effects between components.
-      - For each ablation variant, use the **same datasets, same evaluation protocol, and same metrics** as the quantitative experiments to ensure fair comparison.
-      - Present ablation results clearly using dedicated tables and/or figures. An ablation table showing all variants side-by-side is strongly recommended.
-      - For each removed component, provide detailed analysis: quantify the performance drop (e.g., "Removing X causes a Y% decrease in F1"), explain why this drop occurs theoretically, and state the conclusion about that component's contribution to the overall system.
-      - The ablation study must collectively demonstrate that **every single proposed innovation is indispensable** for achieving optimal performance.
+      **b) Ablation Studies**:
+      - Use controlled variable methods to validate the effectiveness of each innovation point.
+      - If your innovative method contains multiple components (e.g., innovations 1, 2, 3), you need to conduct the following experiments separately:
+        * Performance of the full model
+        * Performance after removing innovation 1
+        * Performance after removing innovation 2
+        * Performance after removing innovation 3
+        * Optional: Performance after removing innovations 1+2, 2+3, or 1+3
+      - Prove that each innovation point is essential through comparison.
+      - Present ablation experiment results clearly using tables or figures.
+      - Analyze the contribution of each component to overall performance.
 
       - Try to include all relevant plots and tables. Consider combining multiple related plots into one figure.
-      - Real, publicly-available benchmark datasets are strongly preferred for all experiments. If synthetic data is used, clearly justify why real data was not suitable and present the synthetic experiments as a controlled evaluation setting for rigorous method validation. The synthetic data should be representative of real-world complexity, not oversimplified or idealized.
+      - If synthetic data is used, present it as a controlled experimental setting for rigorous method evaluation.
       - Write in English(英文).
 
     - **Conclusion**:
@@ -308,11 +306,7 @@ writeup:
 
   # 数据说明提示（如使用合成数据）
   data_usage_note: |
-    IMPORTANT: Real, publicly-available datasets should be the primary choice for all experiments. Synthetic or simulated data should only be used when no suitable real-world dataset exists for the specific research question.
-    If synthetic data or simulated experiments must be used in this research:
-    - Clearly justify why real public datasets were not suitable for this specific investigation
-    - Describe the synthetic data generation process in detail, including all assumptions, parameters, and random seeds
-    - Ensure the synthetic data is representative of real-world complexity — it should include realistic noise, variability, and distributional characteristics, not idealized or oversimplified data
+    IMPORTANT: If synthetic data or simulated experiments are used in this research:
     - Frame synthetic data as a standard and valid methodology for preliminary research in the field
     - Emphasize that synthetic experiments allow controlled evaluation of the proposed methods
     - Highlight the scientific insights gained from these experiments, regardless of data source
@@ -432,7 +426,7 @@ writeup:
     Please review the figures and make the following changes:
     1. For figures that do not add significant value to the paper, move them to the appendix
     2. For figures that are not very informative or do not effectively communicate meaningful patterns, remove them entirely
-    3. For figures that do not contain subfigures and present sparse information, consider combining them with other related figures
+    3. For figures that does not contain subfigures and present sparse information, consider combining them with other related figures
     4. Update all relevant text discussions to reflect any changes in figure placement or combinations
     5. Enhance the scientific analysis of the remaining figures in the text - provide detailed, insightful discussions of their significance and findings
 
@@ -1040,22 +1034,35 @@ agent_manager:
       - Change hyperparameters such as learning rate, number of epochs, batch size, etc. to improve the performance
       - DO NOT change the model architecture from the previous stage
       - Introduce TWO more new datasets from HuggingFace test the model. Try very hard to think what Huggingface datasets can be used here for testing.
+      - Only use supported HuggingFace Hub dataset IDs or standard local json/csv/parquet loaders.
+      - Do NOT use deprecated dataset scripts, local script filenames such as LongBench.py, or unsupported script-style load_dataset() paths.
+      - Do NOT rely on trust_remote_code=True for dataset loading unless you have verified the loading path is still supported by the installed datasets version.
+      - If a candidate real dataset cannot be loaded in a supported way, you may fall back to synthetic data, but state that choice clearly in the code and saved results instead of silently masking the fallback.
     stage_3: |
       - Explore novel improvements
       - Come up with experiments to reveal new insights
       - Be creative and think outside the box
       - MAKE SURE you use THREE HuggingFace dataset in total to test your models
+      - Only use supported HuggingFace Hub dataset IDs or standard local json/csv/parquet loaders.
+      - Do NOT use deprecated dataset scripts, local script filenames such as LongBench.py, or unsupported script-style load_dataset() paths.
+      - Do NOT rely on trust_remote_code=True for dataset loading unless you have verified the loading path is still supported by the installed datasets version.
+      - If a required real dataset cannot be loaded in a supported way, you may fall back to synthetic data, but state that choice clearly in the code and saved results instead of silently masking the fallback.
     stage_4: |
-      - Conduct systematic ablation studies that reveal the contribution of each proposed innovation component.
-      - Use the controlled variable method: for a method with N innovation points, test the full model, then each model with one component removed (N-1 variants), and optionally multi-component removals.
-      - Use the same datasets and metrics as in previous stages to ensure fair comparison.
-      - Prove through quantitative data that each innovation point is indispensable for achieving optimal performance.
+      - Conduct systematic component analysis that reveals the contribution of each part
+      - Use the same datasets you used from the previous stage
 
   # 任务描述模板
   task_desc_template: |
     You are an ambitious AI researcher who is looking to publish a paper that will contribute significantly to the field.
     You have an idea and you want to conduct creative experiments to gain scientific insights.
     Your aim is to run experiments to gather sufficient results for a top conference paper.
+
+    Dataset-loading rules for experiment code generation:
+    - Prefer supported HuggingFace Hub dataset IDs or standard local json/csv/parquet loaders.
+    - Do NOT use deprecated dataset scripts, local script filenames such as LongBench.py, or unsupported script-style load_dataset() paths.
+    - Do NOT rely on trust_remote_code=True for dataset loading unless you have verified the loading path is still supported by the installed datasets version.
+    - If a real dataset cannot be loaded in a supported way, you may fall back to synthetic data, but you must state that fallback clearly in the code, logs, and saved results instead of silently masking it.
+
     Your research idea:\n\n
 
 
@@ -1435,41 +1442,40 @@ icbinb_writeup:
       - Write in English(英文).
 
     - **Method / Problem Discussion**:
-      - The Method section is the absolute core of the entire paper. It must comprehensively and rigorously introduce the proposed innovative method. Use framework diagrams, principle schematics, mathematical formulas, and pseudocode to provide exhaustive detail.
-      - **Framework/Architecture Diagram**: Include a clear, professional diagram (LaTeX TikZ or included figure) that shows the complete pipeline and data flow of the proposed method.
-      - **Principle/Schematic Diagrams**: For each key mechanism or novel component, include a dedicated schematic illustrating how it works conceptually and visually.
-      - **Mathematical Formulas**: Use LaTeX equation environments to precisely and completely describe all core computational processes. All formulas should be numbered and properly referenced. Define all variables clearly.
-      - **Pseudocode**: Provide a complete algorithm description using the LaTeX algorithm/algorithmic environment detailing the step-by-step flow.
-      - **Per-Innovation Subsections**: Each individual innovation/contribution must have its own well-labeled subsection with detailed explanation, theoretical motivation, and formal description.
-      - **Theoretical Rationale**: For each design choice, explain the theoretical reasoning and expected benefits.
-      - **Comparison with Existing Methods**: Systematically compare with existing approaches to highlight novelty and advantages.
+      - The Method section is the core of the entire paper and must thoroughly introduce the innovative approach.
+      - Include an architecture diagram showing the overall structure of the method.
+      - Include schematic diagrams illustrating the working principles of key mechanisms.
+      - Use mathematical formulas (LaTeX equation environment) to precisely describe the core computational processes.
+      - Use pseudocode (algorithm environment) to describe the algorithm flow.
+      - Each innovation point should have its own subsection for detailed explanation.
+      - Explain the theoretical rationale and expected benefits of each design choice.
+      - Compare with existing methods to highlight the novel contributions.
       - If results are not strictly an improvement, discuss partial successes or lessons learned.
       - Write in English(英文).
 
     - **Experiments** (if applicable):
       - The Experiments section must include the following two subsections:
 
-      **a) Quantitative Experiments** (定量实验):
-      - The goal is to rigorously demonstrate through comprehensive quantitative data that the proposed algorithm is **effective, reliable, and credible**, supporting the paper's core claims in a **logically closed loop**.
-      - Use established, academically-recognized quantitative metrics appropriate for the task domain.
-      - Present results through well-designed tables and figures for intuitive comparison, including comparison tables with baseline methods.
-      - Conduct fair comparisons with all selected baselines using identical datasets and evaluation protocols.
-      - Provide statistical analysis (mean, standard deviation, confidence intervals, significance tests where applicable).
-      - Provide in-depth discussion: explain **why** the method performs as observed, connect gains back to Method design choices, and ensure results support central claims.
+      **a) Quantitative Experiments**:
+      - Use established quantitative metrics from the field (such as Accuracy, Precision, Recall, F1-score, MSE, MAE, BLEU, ROUGE, etc., selected based on task type).
+      - Present experimental results intuitively through tables and figures.
+      - Conduct fair comparisons with baseline methods.
+      - Perform statistical analysis on results (such as mean, standard deviation, confidence intervals).
+      - Provide detailed discussion of experimental results, explaining why your method performs better.
 
-      **b) Ablation Studies** (消融实验):
-      - The goal is **controlled-variable experiments** proving each innovation component is **necessary**, quantifying each component's contribution to overall performance.
-      - If the method has N innovation points (e.g., 1, 2, 3), conduct:
-        * **Full model** (1+2+3...N): reference / upper bound.
-        * **Single-component removals**: Remove innovation 1 only (keep 2,3...N) → measure drop → prove essentiality. Repeat for each component.
-        * **Multi-component combinations** (optional): Remove pairs (1+2, 2+3, 1+3, etc.) to reveal synergistic or compensatory effects.
-      - Use identical datasets, evaluation protocol, and metrics as quantitative experiments.
-      - Present ablation results in dedicated tables and/or figures with side-by-side comparison of all variants.
-      - For each removed component: quantify the drop, explain theoretically why it occurs, and conclude on that component's contribution.
-      - Collectively demonstrate that **every proposed innovation is indispensable**.
+      **b) Ablation Studies**:
+      - Use controlled variable methods to validate the effectiveness of each innovation point.
+      - If your innovative method contains multiple components (e.g., innovations 1, 2, 3), you need to conduct the following experiments separately:
+        * Performance of the full model
+        * Performance after removing innovation 1
+        * Performance after removing innovation 2
+        * Performance after removing innovation 3
+        * Optional: Performance after removing innovations 1+2, 2+3, or 1+3
+      - Prove that each innovation point is essential through comparison.
+      - Present ablation experiment results clearly using tables or figures.
+      - Analyze the contribution of each component to overall performance.
 
       - Present results truthfully according to the data you have. Negative, unexpected, or inconclusive findings are valid contributions for this workshop.
-      - Strongly prefer real, publicly-available benchmark datasets for all experiments. If synthetic data is used, clearly justify why real data was not suitable and present it as a controlled evaluation setting. The synthetic data should be representative of real-world complexity, not oversimplified or idealized.
       - Include figures, tables, or real-world examples that illustrate the pitfalls.
       - Include up to 4 figures in the main text. All other figures should be in the appendix.
       - Write in English(英文).
@@ -1530,11 +1536,7 @@ icbinb_writeup:
 
   # 数据说明提示（如使用合成数据）
   data_usage_note: |
-    IMPORTANT: Real, publicly-available datasets should be the primary choice for all experiments. Synthetic or simulated data should only be used when no suitable real-world dataset exists for the specific research question.
-    If synthetic data or simulated experiments must be used in this research:
-    - Clearly justify why real public datasets were not suitable for this specific investigation
-    - Describe the synthetic data generation process in detail, including all assumptions, parameters, and random seeds
-    - Ensure the synthetic data is representative of real-world complexity — it should include realistic noise, variability, and distributional characteristics, not idealized or oversimplified data
+    IMPORTANT: If synthetic data or simulated experiments are used in this research:
     - Frame synthetic data as a standard and valid methodology for preliminary research in the field
     - Emphasize that synthetic experiments allow controlled evaluation of the proposed methods
     - Highlight the scientific insights gained from these experiments, regardless of data source
@@ -1560,7 +1562,7 @@ icbinb_writeup:
     {idea_text}
     ```
 
-    We have the following experiment summaries (JSON):
+    We have the following experiment summariesi (JSON):
     ```json
     {summaries}
     ```
@@ -1653,7 +1655,7 @@ icbinb_writeup:
     Please review the figures and make the following changes:
     1. For figures that do not add significant value to the paper, move them to the appendix
     2. For figures that are not very informative or do not effectively communicate meaningful patterns, remove them entirely
-    3. For figures that do not contain subfigures and present sparse information, consider combining them with other related figures
+    3. For figures that does not contain subfigures and present sparse information, consider combining them with other related figures
     4. Update all relevant text discussions to reflect any changes in figure placement or combinations
     5. Enhance the scientific analysis of the remaining figures in the text - provide detailed, insightful discussions of their significance and findings
 

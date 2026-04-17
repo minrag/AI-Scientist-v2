@@ -16,11 +16,13 @@ logger = logging.getLogger("ai-scientist")
 
 
 def backoff_create(
-    create_fn: Callable, retry_exceptions: list[Exception], *args, **kwargs
+    create_fn: Callable, retry_exceptions: tuple[type[BaseException], ...], *args, **kwargs
 ):
+    retryable_exceptions = retry_exceptions or (Exception,)
+
     @backoff.on_exception(
         wait_gen=backoff.expo,
-        exception=tuple(retry_exceptions),
+        exception=retryable_exceptions,
         max_value=60,
         factor=1.5,
     )
@@ -29,7 +31,7 @@ def backoff_create(
 
     try:
         return _call()
-    except retry_exceptions as e:
+    except retryable_exceptions as e:
         logger.info(f"Backoff gave up after retries: {e}")
         raise
 

@@ -747,7 +747,7 @@ def perform_writeup(
             exp_summaries, step_name="writeup"
         )
         # Convert them to one big JSON string for context
-        combined_summaries_str = json.dumps(filtered_summaries_for_writeup, indent=2)
+        combined_summaries_str = json.dumps(filtered_summaries_for_writeup, ensure_ascii=False, separators=(",", ":"))
 
         # Prepare a new fresh latex folder
         if not osp.exists(osp.join(latex_folder, "template.tex")):

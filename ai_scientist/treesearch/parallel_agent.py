@@ -452,17 +452,8 @@ class MinimalAgent:
                 "Your response should be a brief outline/sketch of your proposed solution in natural language (7-10 sentences), "
                 "followed by a single markdown code block (using the format ```python ... ```) which implements this solution and prints out the evaluation metric(s) if applicable. "
                 "There should be no additional headings or text in your response. Just natural language text followed by a newline and then the markdown code block. "
-                "Make sure to write concise code."
-            )
-        }
-
-    def _prompt_metricparse_resp_fmt(self):
-        return {
-            "Response format": (
-                "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences), "
-                "followed by a single markdown code block (using the format ```python ... ```) which implements the full code for the metric parsing. "
-                "There should be no additional headings or text in your response. Just natural language text followed by a newline and then the markdown code block. "
-                "Your generated code should be complete and executable. "
+                "Make sure to write concise code. "
+                "If any real dataset cannot be loaded in a supported way, you may fall back to synthetic data, but the generated code must state that fallback clearly in its code, logs, and saved results instead of silently masking it."
             )
         }
 
@@ -473,8 +464,9 @@ class MinimalAgent:
                 "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences), "
                 "followed by a single markdown code block (using the format ```python ... ```) which implements the full code including the bugfix/solution. "
                 "There should be no additional headings or text in your response. Just natural language text followed by a newline and then the markdown code block. "
-                "Your generated code should be complete and executable. Do not omit any part of the code, even if it was part of a previous implementation."
-                "Make sure to write concise code."
+                "Your generated code should be complete and executable. Do not omit any part of the code, even if it was part of a previous implementation. "
+                "Make sure to write concise code. "
+                "If any real dataset cannot be loaded in a supported way, you may fall back to synthetic data, but the generated code must state that fallback clearly in its code, logs, and saved results instead of silently masking it."
             )
         }
 
@@ -484,9 +476,10 @@ class MinimalAgent:
             "Response format": (
                 "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences), "
                 "followed by a single markdown code block (using the format ```python ... ```) which implements the full code including hyperparameter tuning. "
-                "There should be no additional headings or text in your response. Do not omit any part of the code, "
-                "Your generated code should be complete and executable."
-                "Make sure to write concise code."
+                "There should be no additional headings or text in your response. Do not omit any part of the code. "
+                "Your generated code should be complete and executable. "
+                "Make sure to write concise code. "
+                "If any real dataset cannot be loaded in a supported way, you may fall back to synthetic data, but the generated code must state that fallback clearly in its code, logs, and saved results instead of silently masking it."
             )
         }
 
@@ -496,9 +489,10 @@ class MinimalAgent:
             "Response format": (
                 "Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences), "
                 "followed by a single markdown code block (using the format ```python ... ```) which implements the full code including the ablation study. "
-                "There should be no additional headings or text in your response. Do not omit any part of the code, "
-                "Your generated code should be complete and executable."
-                "Make sure to write concise code."
+                "There should be no additional headings or text in your response. Do not omit any part of the code. "
+                "Your generated code should be complete and executable. "
+                "Make sure to write concise code. "
+                "If any real dataset cannot be loaded in a supported way, you may fall back to synthetic data, but the generated code must state that fallback clearly in its code, logs, and saved results instead of silently masking it."
             )
         }
 
@@ -1385,6 +1379,18 @@ class ParallelAgent:
         for future in futures:
             try:
                 result_data = future.result(timeout=self.timeout)
+                if isinstance(result_data, dict) and result_data.get("ok") is False:
+                    worker_error = result_data.get("error", {})
+                    logger.error(
+                        "Worker failed during multi-seed evaluation: "
+                        f"stage={worker_error.get('stage')} "
+                        f"exc_type={worker_error.get('exc_type')} "
+                        f"message={worker_error.get('message')} "
+                        f"parent_id={worker_error.get('parent_id')} "
+                        f"node_id={worker_error.get('node_id')}"
+                    )
+                    logger.error(worker_error.get("traceback", ""))
+                    continue
                 result_node = Node.from_dict(result_data, self.journal)
                 print(f"Parent node id: {result_node.parent.id}")
                 print(f"Sanity check: actual parent node id: {node.id}")
@@ -1533,9 +1539,14 @@ class ParallelAgent:
             agent_file_name=cfg.exec.agent_file_name,
         )
 
+        child_node = None
+        parent_node = None
+        current_stage = "initialization"
+
         try:
             print(f"stage_name: {stage_name}")
             # Recreate node object from node_data, which becomes a parent node.
+            current_stage = "recreate_parent_node"
             if node_data:
                 parent_node = Node.from_dict(node_data, journal=None)
                 print(f"Recreated parent node: {parent_node.id}")
@@ -1545,6 +1556,7 @@ class ParallelAgent:
 
             # Process the node using worker agent
             print("Starting node processing")
+            current_stage = "generate_child_node"
             if seed_eval:
                 # Use the parent node's code to run the same code again
                 child_node = worker_agent._generate_seed_node(parent_node)
@@ -1591,10 +1603,12 @@ class ParallelAgent:
 
             # Execute and parse results
             print("Running code")
+            current_stage = "execute_experiment_code"
             exec_result = process_interpreter.run(child_node.code, True)
             process_interpreter.cleanup_session()
 
             print("Parsing execution results")
+            current_stage = "parse_execution_results"
             worker_agent.parse_exec_result(
                 node=child_node, exec_result=exec_result, workspace=working_dir
             )
@@ -1623,6 +1637,7 @@ class ParallelAgent:
                     # Get metrics parsing prompt from prompt.yaml with original_code as format parameter
                     parse_metrics_prompt = get_prompt('metrics_parsing_prompt', original_code=child_node.code)
 
+                    current_stage = "generate_metrics_parsing_code"
                     (
                         parse_metrics_plan,
                         parse_metrics_code,
@@ -1633,6 +1648,7 @@ class ParallelAgent:
                     child_node.parse_metrics_code = parse_metrics_code
                 try:
                     # Execute the parsing code
+                    current_stage = "execute_metrics_parsing_code"
                     metrics_exec_result = process_interpreter.run(
                         parse_metrics_code, True
                     )
@@ -1655,6 +1671,7 @@ class ParallelAgent:
                             f"[blue]Metrics Parsing Execution Result:\n[/blue] {metrics_exec_result}"
                         )
 
+                        current_stage = "extract_metrics_from_output"
                         metrics_response = cast(
                             dict,
                             query(
@@ -1728,9 +1745,11 @@ class ParallelAgent:
                             else:
                                 plot_code_from_prev_stage = None
 
+                            current_stage = "generate_plotting_code"
                             plotting_code = worker_agent._generate_plotting_code(
                                 child_node, working_dir, plot_code_from_prev_stage
                             )
+                        current_stage = "execute_plotting_code"
                         plot_exec_result = process_interpreter.run(plotting_code, True)
                         process_interpreter.cleanup_session()
                         child_node.plot_exec_result = plot_exec_result
@@ -1810,6 +1829,7 @@ class ParallelAgent:
 
                 if child_node.plots:
                     try:
+                        current_stage = "analyze_plots_with_vlm"
                         worker_agent._analyze_plots_with_vlm(child_node)
                         logger.info(
                             f"Generated VLM analysis for plots in node {child_node.id}"
@@ -1820,6 +1840,7 @@ class ParallelAgent:
                         )
 
             # Convert result node to dict
+            current_stage = "serialize_result"
             print("Converting result to dict")
             result_data = child_node.to_dict()
             print(f"Result data keys: {result_data.keys()}")
@@ -1828,11 +1849,27 @@ class ParallelAgent:
             return result_data
 
         except Exception as e:
-            print(f"Worker process error: {str(e)}")
+            print(f"Worker process error at stage {current_stage}: {str(e)}")
             import traceback
 
-            traceback.print_exc()
-            raise
+            traceback_str = traceback.format_exc()
+            logger.error(
+                f"Worker process error at stage {current_stage}: {type(e).__name__}: {str(e)}"
+            )
+            logger.error(traceback_str)
+            return {
+                "ok": False,
+                "error": {
+                    "kind": "worker_exception",
+                    "exc_type": type(e).__name__,
+                    "message": str(e),
+                    "repr": repr(e),
+                    "traceback": traceback_str,
+                    "stage": current_stage,
+                    "node_id": getattr(child_node, "id", None),
+                    "parent_id": getattr(parent_node, "id", None),
+                },
+            }
 
     def _generate_hyperparam_tuning_idea(self) -> Optional[HyperparamTuningIdea]:
         """Generate the next hyperparam tuning idea based on what's been done.
@@ -2189,6 +2226,19 @@ class ParallelAgent:
             try:
                 print("About to get result from future")
                 result_data = future.result(timeout=self.timeout)
+                if isinstance(result_data, dict) and result_data.get("ok") is False:
+                    worker_error = result_data.get("error", {})
+                    print(f"Worker reported serializable failure: {worker_error}")
+                    logger.error(
+                        "Worker failed while processing node: "
+                        f"stage={worker_error.get('stage')} "
+                        f"exc_type={worker_error.get('exc_type')} "
+                        f"message={worker_error.get('message')} "
+                        f"parent_id={worker_error.get('parent_id')} "
+                        f"node_id={worker_error.get('node_id')}"
+                    )
+                    logger.error(worker_error.get("traceback", ""))
+                    continue
                 if "metric" in result_data:
                     print(f"metric type: {type(result_data['metric'])}")
                     print(f"metric contents: {result_data['metric']}")

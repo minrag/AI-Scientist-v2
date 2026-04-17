@@ -394,7 +394,7 @@ def perform_writeup(
                 loaded_summaries[key] = {}
 
         # Convert them to one big JSON string for context
-        combined_summaries_str = json.dumps(loaded_summaries, indent=2)
+        combined_summaries_str = json.dumps(loaded_summaries, ensure_ascii=False, separators=(",", ":"))
 
         # Prepare a new fresh latex folder
         if not osp.exists(osp.join(latex_folder, "template.tex")):

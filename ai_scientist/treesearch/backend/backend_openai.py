@@ -12,12 +12,7 @@ from ai_scientist.utils.model_config import load_model_config
 logger = logging.getLogger("ai-scientist")
 
 
-OPENAI_TIMEOUT_EXCEPTIONS = (
-    openai.RateLimitError,
-    openai.APIConnectionError,
-    openai.APITimeoutError,
-    openai.InternalServerError,
-)
+OPENAI_RETRY_EXCEPTIONS = (Exception,)
 
 
 def get_ai_client(model_type: str, max_retries=2) -> openai.OpenAI:
@@ -87,7 +82,7 @@ def query(
     t0 = time.time()
     completion = backoff_create(
         client.chat.completions.create,
-        OPENAI_TIMEOUT_EXCEPTIONS,
+        OPENAI_RETRY_EXCEPTIONS,
         messages=messages,
         **filtered_kwargs,
     )
@@ -115,6 +110,14 @@ def query(
 
     in_tokens = completion.usage.prompt_tokens
     out_tokens = completion.usage.completion_tokens
+
+    logger.info(
+        "OpenAI response: model=%s, prompt_tokens=%s, completion_tokens=%s, request_time=%.2fs",
+        completion.model,
+        in_tokens,
+        out_tokens,
+        req_time,
+    )
 
     info = {
         "system_fingerprint": completion.system_fingerprint,

@@ -99,7 +99,7 @@ def aggregate_plots(
         exp_summaries, step_name="plot_aggregation"
     )
     # Convert them to one big JSON string for context
-    combined_summaries_str = json.dumps(filtered_summaries_for_plot_agg, indent=2)
+    combined_summaries_str = json.dumps(filtered_summaries_for_plot_agg, ensure_ascii=False, separators=(",", ":"))
 
     # Build aggregator prompt
     aggregator_prompt = build_aggregator_prompt(combined_summaries_str, idea_text)

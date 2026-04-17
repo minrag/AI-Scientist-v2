@@ -18,6 +18,14 @@ from ai_scientist.utils.token_tracker import track_token_usage
 
 
 RETRYABLE_LLM_ERRORS = (Exception,)
+MAX_MSG_HISTORY_ROUNDS = 5
+
+
+def trim_msg_history(msg_history, max_rounds=MAX_MSG_HISTORY_ROUNDS):
+    if not msg_history:
+        return []
+    max_messages = max_rounds * 2
+    return msg_history[-max_messages:]
 
 
 # Get N responses from a single message, used for ensembling.
@@ -74,8 +82,7 @@ def _get_batch_responses_from_llm_once(
         Tuple of (list of response contents, list of message histories)
     """
     msg = prompt
-    if msg_history is None:
-        msg_history = []
+    msg_history = trim_msg_history(msg_history)
 
     # Check client type by inspecting the client
     is_anthropic = isinstance(client, anthropic.Anthropic)
@@ -211,9 +218,7 @@ def _get_response_from_llm_once(
         Tuple of (response content, new message history)
     """
     msg = prompt
-    if msg_history is None:
-        msg_history = []
-
+    msg_history = trim_msg_history(msg_history)
     is_anthropic = isinstance(client, anthropic.Anthropic)
 
     if is_anthropic:
