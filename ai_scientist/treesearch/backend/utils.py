@@ -13,6 +13,7 @@ import logging
 from typing import Callable
 
 logger = logging.getLogger("ai-scientist")
+MAX_BACKOFF_RETRY_ATTEMPTS = 5
 
 
 def backoff_create(
@@ -23,6 +24,7 @@ def backoff_create(
     @backoff.on_exception(
         wait_gen=backoff.expo,
         exception=retryable_exceptions,
+        max_tries=MAX_BACKOFF_RETRY_ATTEMPTS,
         max_value=60,
         factor=1.5,
     )
